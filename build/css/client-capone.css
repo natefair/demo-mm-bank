@@ -1,0 +1,29 @@
+.ui-page {
+    background: #013b70 url(../img/capone/bg.png) no-repeat !important;
+}
+.logo {
+    background: url(../img/capone/logo.png) no-repeat;
+}
+.logo-chat {
+    background: url(../img/capone/logo-chat.png) no-repeat;
+}
+.back-button {
+    background: url(../img/capone/back.png) no-repeat;
+}
+.pmtview {
+    background: url(../img/capone/Payments-MakePayment-FormBackground-CapOne.png) no-repeat;
+}
+li.add-payment-account {
+    background-image: url(../img/capone/RecentTransactions-Filter-Background-CapOne.png);
+}
+.big-btn .ui-btn-text,
+ul#charges-list li div.list-partial,
+div.card-bits span.card-type,
+div.card-bits span.card-choice,
+.detail-type {
+    color: #0b335c !important;
+}
+div.page-heading, .help-msg {
+    color: #ffffff;
+    font-weight: bold;
+}

@@ -1,0 +1,29 @@
+.ui-page {
+    background: $BACKGROUND_COLOR url(../img/$CLIENT_NAME/bg.png) $BACKGROUND_REPEAT !important;
+}
+.logo {
+    background: url(../img/$CLIENT_NAME/logo.png) no-repeat;
+}
+.logo-chat {
+    background: url(../img/$CLIENT_NAME/logo-chat.png) no-repeat;
+}
+.back-button {
+    background: url(../img/$CLIENT_NAME/back.png) no-repeat;
+}
+.pmtview {
+    background: url(../img/$CLIENT_NAME/Payments-MakePayment-FormBackground-$CLIENT_CAMEL_CASE.png) no-repeat;
+}
+li.add-payment-account {
+    background-image: url(../img/$CLIENT_NAME/RecentTransactions-Filter-Background-$CLIENT_CAMEL_CASE.png);
+}
+.big-btn .ui-btn-text,
+ul#charges-list li div.list-partial,
+div.card-bits span.card-type,
+div.card-bits span.card-choice,
+.detail-type {
+    color: $FONT_COLOR !important;
+}
+div.page-heading, .help-msg {
+    color: $HEADING_FONT_COLOR;
+    font-weight: $HEADING_FONT_WEIGHT;
+}
