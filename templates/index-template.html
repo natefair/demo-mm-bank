@@ -104,7 +104,7 @@
   </div>
   <div id="charge-list" data-role="content">
    <div class="page-heading">Recent Transactions</div>
-   <ul id="charges-list" data-role="listview" data-inset="true"></ul>
+   <ul id="transactions-list" data-role="listview" data-inset="true"></ul>
   </div>
 </div>
 
@@ -132,19 +132,19 @@
         <li>
           <div class="ui-grid-b" data-role="content">
             <div class="ui-block-b detail-type">AMOUNT:</div>
-            <div class="ui-block-b double" id="amount"></div>
+            <div class="ui-block-b double" id="charge-amount"></div>
           </div>
           <div class="ui-grid-b top-border" data-role="content">
             <div class="ui-block-b detail-type">DATE &amp; TIME:</div>
-            <div class="ui-block-b double" id="datetime"></div>
+            <div class="ui-block-b double" id="charge-datetime"></div>
           </div>
           <div class="ui-grid-b top-border" data-role="content">
             <div class="ui-block-b detail-type">MERCHANT NAME:</div>
-            <div class="ui-block-b double" id="merchant"></div>
+            <div class="ui-block-b double" id="charge-merchant"></div>
           </div>
           <div class="ui-grid-b top-border" data-role="content">
             <div class="ui-block-b detail-type">LOCATION:</div>
-            <div class="ui-block-b double" id="mlocation"></div>
+            <div class="ui-block-b double" id="charge-location"></div>
           </div>
         </li>
       </ul>
@@ -444,7 +444,7 @@ timely and thorough manner.
   </div>
   <!-- Survey form -->
   <div data-role="content">
-    <div class="page-heading">Please share your feedback:</div>
+    <div class="page-heading help-msg">Please share your feedback:</div>
     <div class="page-content">
       <div>
         <div class="survey-section">

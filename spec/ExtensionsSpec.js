@@ -1,4 +1,4 @@
-describe('extensions.js', function () {
+describe('js/extensions.js', function () {
 
   // Date.addDays extension
   describe('Date.addDays', function () {
@@ -117,6 +117,13 @@ describe('extensions.js', function () {
     });
   });
 
+  // String.toFloat extension
+  describe('String.toFloat', function () {
+    it('converts "-$123.45" to -123.45', function () {
+      expect('-$123.45'.toFloat()).toEqual(-123.45);
+    });
+  });
+
   // Global isNumber function
   describe('isNumber', function () {
     it('says that integers are numbers', function () {
@@ -138,6 +145,25 @@ describe('extensions.js', function () {
     });
     it('says "2012/06/05" is not a number', function () {
        expect(isNumber('2012/06/05')).toBe(false);
+    });
+  });
+
+  // Global isArray function
+  describe('isArray', function () {
+    it('say that null is not an array', function () {
+      expect(isArray(null)).toBeFalsy();
+    });
+    it('say that undefined is not an array', function () {
+      expect(isArray(undefined)).toBeFalsy();
+    });
+    it('say that "123" is not an array', function () {
+      expect(isArray("123")).toBeFalsy();
+    });
+    it('say that [] is an array', function () {
+      expect(isArray([])).toBeTruthy();
+    });
+    it('say that Array() is an array', function () {
+      expect(isArray(Array())).toBeTruthy();
     });
   });
 });

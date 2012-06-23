@@ -1,15 +1,45 @@
+/**
+ * @class Account
+ *
+ * Encapsulates display formats
+ *
+ * @member card_prefix  - prefix to prepend to card_digits as defined by Client
+ * @member card_digits  - last N digits from account number, where N is defined by Client
+ * @member card_display - card_prefix + card_digits
+ * @member pay_from     - "name ... {last 4 digits of number}"
+ * @member pay_to       - "name card_prefix card_digits"
+ *
+ * @constructor
+ */
+var Account = function (obj) {
+    $.extend(this, obj);
+    this.card_prefix  = Client.card_digits_prefix;
+    this.card_digits  = this.number.slice(-Client.card_show_digits);
+    this.card_display = this.card_prefix + this.card_digits;
+    this.pay_from     = this.name + ' ... ' + this.number.slice(-4);
+    this.pay_to       = [this.name, this.card_prefix, this.card_digits].join(' ');
+    this.minpmt       = this.minpmt || '20.00';
+    this.balance      = this.balance || null;
+};
+
+// ----------------------------------------------------------------------------
+
 var AccountData = AccountData || {};
 
 // Use this BaseUrl attribute to change the global location of the data
 AccountData.BaseUrl = 'data/acctdata';
 
-/*
+// ----------------------------------------------------------------------------
+
+/**
+ * @module AccountData.Account
+ *
  * Account Data Loader
  *
  * Loads mock account information.
  *
- *   AccountData.account.initDropdown(account_number);
- *   var account_data = AccountData.account.getData();
+ *   AccountData.Account.initDropdown(account_number);
+ *   var account_data = AccountData.Account.getData();
  *
  * account_data.fullname      => string
  * account_data.org           => string
@@ -21,450 +51,338 @@ AccountData.BaseUrl = 'data/acctdata';
  * account_data.dest_accounts => array of hash {name, number, balance, duedate}
  *
  */
-AccountData.account = (function($) {
-    var data = null,
-        _active_acct_number = null,
-        _active_cc_number   = null,
-        _active_src_number  = null,
-        _cc_card_img        = null;
+AccountData.Account = (function ($) {
+    'use strict';
 
+    // Module's private variables
+    var account_data       = null,
+        active_acct_number = null,
+        active_cc_number   = null,
+        active_src_number  = null;
 
-    // TODO: CSS for cc-card-img { height: 28px; padding-top: 2px; }
-    function cc_card_img() {
-        if (_cc_card_img === null) {
-            _cc_card_img = $('<img>', {
-                'src':   'img/' + Client.name + '/card.png',
-                'class': 'card-img'
+    // Module's private methods
+    function make_account_json_url() {
+        return AccountData.BaseUrl + '/' + active_acct_number + '.json';
+    }
+
+    /**
+     * @method load_data - load the JSON from the active account number,
+     * passing that data to the given callback function.
+     *
+     * @param callback {Function} - a setup function
+     */
+    function load_data(callback) {
+        if (account_data === null) {
+            $.getJSON(make_account_json_url(), function (results) {
+               account_data = results;
+               account_data.src_accounts = account_data.src_accounts.map( function (obj) {
+                   return new Account(obj);
+               });
+               account_data.dest_accounts = account_data.dest_accounts.map( function (obj) {
+                   return new Account(obj);
+               });
+               if (typeof callback === 'function') {
+                   callback(account_data);
+               }
             });
+        } else if (typeof callback === 'function') {
+            callback(account_data);
         }
-        return _cc_card_img;
     }
 
-    var makeAccountUrl = function() {
-        return AccountData.BaseUrl + '/' + _active_acct_number + '.json';
-    };
-
-    // TODO: Move select tag into HTML, and turn 'selected' into ID
-    var select_element = function(selected, disabled) {
-        var select = $('<select>', {
-            'id': 'card-choice',
-            'name': 'card-choice',
-            'data-mini': 'true'
-        });
-        if (disabled) {
-            select.attr('disabled', 'disabled');
+    /**
+     * @method active_dest_account - return the active pay to account
+     * @return {Account}
+     */
+    function active_dest_account() {
+        //if (account_data === null) {
+        //    throw 'active_dest_account: account_data is null';
+        //}
+        if (active_cc_number === null) {
+            active_cc_number = account_data.dest_accounts[0].number;
         }
-        return select;
-    };
-
-
-    // TODO: Build option tag with jQuery methods
-    var select_option = function(cc_number, selected) {
-        var option = $('<option>', {'value': cc_number}),
-            last_4 = cc_number.substr(-Client.card_show_digits);
-
-        option.text(Client.card_digits_prefix + last_4);
-
-        if (cc_number === selected) {
-            option.attr('selected', 'selected');
-        }
-
-        return option;
-    };
-
-
-    var listCards = function(div, disabled) {
-        var div = $('#' + div);
-        div.empty();
-
-        var selected_cc_number = AccountData.account.active_cc_number();
-
-        // Add the CC icon
-        $(cc_card_img()).appendTo(div);
-
-        // Build the CC dropdown list
-        var dropdown = select_element(selected_cc_number, disabled).appendTo(div);
-        $(data.dest_accounts).each( function(i, acct) {
-            select_option(acct.number, selected_cc_number).appendTo(dropdown);
-        });
-
-        try {
-            dropdown.selectmenu();
-        } catch(err) {
-            BankDemo.log('listCards ERROR: ' + err);
-        }
-
-        // Setup the default change handler to record active CC number
-        dropdown.on('change', function() {
-            AccountData.account.set_active_cc_number(dropdown[0].value);
-            //populate_payment_due();
-            //listPaymentOptions("list-payment-amount", false);
-        });
-
-        // Call the change handler to update the active CC number
-        dropdown.change();
-        return dropdown;
-    };
-
-
-/*
-    function payment_option_list() {
-        return $('<select>', {
-            'name':             'pmt-choice',
-            'id':               'pmt-choice',
-            'data-native-menu': 'false'
-        });
-    }
-
-    function payment_option(value, option) {
-        return $('<option>', {
-            'value': value
-        }).text(option);
-    }
-
-    var listPaymentOptions = function(div, disabled) {
-        var acct = dest_account(),
-            div  = $('#' + div);
-
-        //get the current balance and minumum payment values
-        //Only continue if min_pmt has a value
-        if (acct.minpmt === null) {
-            // set the current balance and don't create a a select option
-            $('.payment-option').html('CURRENT<br />BALANCE');
-            $('.payment-amount').html('$' + acct.balance);
-            $('#pmtamount').val(acct.balance);
-            return;
-        }
-
-        var list = payment_option_list().appendTo(div.empty());
-
-        payment_option(acct.minpmt,  'Minimum Payment: $' + acct.minpmt ).appendTo(list);
-        payment_option(acct.balance, 'Current Balance: $' + acct.balance).appendTo(list);
-
-        try {
-            list.selectmenu();
-        } catch(err) {
-            BankDemo.log('listPaymentOptions ERROR: ' + err);
-        }
-
-        //now hide the list by setting the parent div to hide
-        $('#list-payment-amount').hide(); 
-
-        list.on('change', function() {
-            var acct = dest_account();
-            if (list[0].value === acct.balance) {
-                $('.payment-option').html('CURRENT<br />BALANCE');
-                $('.payment-amount').html('$' + acct.balance);
-                $('#pmtamount').val(acct.balance);
-            } else {
-                $('.payment-option').html('MINIMUM<br />PAYMENT');
-                $('.payment-amount').html('$' + acct.minpmt);
-                $('#pmtamount').val(acct.minpmt);
-            }
-        });
-        // Call the change handler to update the active src number
-        list.change();
-        return list;
-    }
-*/
-
-    var src_account = function() {
-        if (_active_src_number == null) {
-            _active_src_number = data.src_accounts[0].number;
-        }
-        return $.grep(data.src_accounts, function(acct) {
-            return acct.number === _active_src_number;
+        return $.grep(account_data.dest_accounts, function (acct) {
+            return acct.number === active_cc_number;
         })[0];
-    };
-
-
-    var dest_account = function() {
-        if (data === null) {
-            throw 'data is null in dest_account';
-        }
-        return $.grep(data.dest_accounts, function(acct) {
-            return acct.number === _active_cc_number;
-        })[0];
-    };
-
-    function set_payment_amount() {
-        var acct = AccountData.account.getDestAccount();
-
-        // Right now sets to minimum balance if a value is set in the json
-        // Otherwise sets to the current balance
-        if (acct.minpmt !== null) {
-            $('#pmtamount').val(acct.minpmt);
-        } else {
-            $('#pmtamount').val(acct.balance);
-        }
     }
 
-    var populate_payment_due = function() {
-        var acct = dest_account(),
-            date = AccountData.Utils.dateDue(acct.datedue);
-
-        // set values in main menu
-        $('.card-type').text(acct.name);
-        $('.payment-due-date').text(date);
-        $('.payment-option').html('CURRENT<br/>BALANCE');
-        $('.payment-amount').html('$' + acct.balance);
-       
-        // set values in payment
-        try {
-            var datebox_date = AccountData.Utils.dateDueDatebox(acct.datedue);
-            $('#pmtdatehidden').data('datebox').options.highDates = [datebox_date];
-        } catch(err) {
-            BankDemo.log('populate_payment_due ERROR: ' + err);
+    /**
+     * @method active_src_account - return the active pay from account
+     * @return {Account}
+     */
+    function active_src_account() {
+        if (account_data === null) {
+            throw 'active_src_account: account_data is null';
         }
-        set_payment_amount();
-        return acct;
-    };
-
+        if (active_src_number === null) {
+            active_src_number = account_data.src_accounts[0].number;
+        }
+        return $.grep(account_data.src_accounts, function (acct) {
+            return acct.number === active_src_number;
+        })[0];
+    }
 
     // API bits
     return {
-        init: function(acct_number) {
-            _active_acct_number = acct_number;
+        /**
+         * @method init - initialize the acctive account number
+         * @param acct_number {Number}
+         */
+        init: function (acct_number) {
+            active_acct_number = acct_number;
         },
-        initDropdown: function(div, disabled, callback) {
-            var url = makeAccountUrl();
-            if (data === null) {
-                $.getJSON(url, function(results) {
-                    data = results;
-                    var dropdown = listCards(div, disabled);
-                    if (typeof callback === 'function') {
-                        callback(dropdown, data);
-                    }
-                    BankDemo.log('initDropdown: loaded URL "' + url + '"');
-                });
-            } else {
-                var dropdown = listCards(div, disabled);
-                if (typeof callback === 'function') {
-                    callback(dropdown, data);
+
+        /**
+         * @method activeAcctNumber - return the active account number
+         * @return {Number}
+         */
+        activeAcctNumber: function () {
+            return active_acct_number;
+        },
+
+        /**
+         * @method initDropdown - load the account data, if it hasn't
+         * been loaded already, and pass the given parameters and account
+         * data to the display_callback.
+         *
+         * @param display_callback {Function} - called with the rest of the
+         * parameters as arguments, along with the account data.
+         * @param div {String} - div parameter for display_callback
+         * @param disabled {Boolean} - disabled parameter for display_callback
+         * @param setup_callback {Function} - setup_callback parameter for display_callback
+         *
+         * "display_callback" can be used to display the resulting data where:
+         *  - "div" defines the div ID where the setup should occur,
+         *  - "disabled" defines if the dropdown is disabled, and
+         *  - "setup_callback" is used to define event callbacks.
+         */
+        initDropdown: function (display_callback, div, disabled, setup_callback) {
+            load_data(function (account_data) {
+                if (typeof display_callback === 'function') {
+                    display_callback(account_data, div, disabled, setup_callback);
                 }
-            }
+            });
         },
-/*
-        initPmtOptsDropdown: function(div, disabled, callback) {
-            var url = makeAccountUrl();
-            if (data === null) {
-                $.getJSON(url, function(results) {
-                    data = results;
-                    var list = listPaymentOptions(div, disabled);
-                    if (typeof callback === 'function') {
-                        callback(list, data);
-                    }
-                });
-            } else {
-                var list = listPaymentOptions(div, disabled);
-                if (typeof callback === 'function') {
-                    callback(list, data);
-                }
-            } 
+
+        /**
+         * @method getData - return the account data
+         * @return {Object}
+         */
+        getData: function () {
+            return account_data;
         },
-*/
-        setDefaultPayment:  set_payment_amount,
-        getData: function() {
-            return data;
+
+        // CC accounts
+
+        /**
+         * @method setActiveCcNumber - set the active pay to account number
+         * @param newval {String} - the new number
+         */
+        setActiveCcNumber: function (newval) {
+            active_cc_number = newval;
         },
-        active_acct_number: function() {
-            return _active_acct_number;
+
+        /**
+         * @method activeCcNumber - return the active pay to accountnumber
+         * @return {String}
+         */
+        activeCcNumber: function () {
+            return active_cc_number;
         },
-        set_active_cc_number: function(newval) {
-            console.log(' ** changing _active_cc_number to: ' + newval);
-            _active_cc_number = newval;
-        },
-        active_cc_number: function() {
-            return _active_cc_number;
-        },
-        refresh_cc_dropdown: function(div) {
-            return listCards(div, false);
-        },
-        set_active_src_number: function(newval) {
-            _active_src_number = newval;
-        },
-        active_src_number: function () {
-            return _active_src_number;
-        },
-        getDestAccount: dest_account,
+
+        /**
+         * @method getDestAccount - return the active pay to account
+         * @return {Account}
+         */
+        getDestAccount: active_dest_account,
+
+        /**
+         * @method getDestAccountName - return the active pay to account name
+         * @return {String}
+         */
         getDestAccountName: function () {
-            return dest_account().name;
+            return active_dest_account().name;
         },
-        get_current_balance: function () {
-            return dest_account().balance;
+
+        /**
+         * @method getDestAccountBalance - return the active pay to account balance
+         * @return {String}
+         */
+        getCurrentBalance: function () {
+            return active_dest_account().balance;
         },
-        getClientCardPrefix: function () {
-            return Client.card_digits_prefix;
+
+        /**
+         * @method getPayTo - return the active pay to account display value
+         * @return {String}
+         */
+        getPayTo: function () {
+            return active_dest_account().pay_to;
         },
-        getDestAccountNumberShort: function () {
-            return dest_account().number.substr(-Client.card_show_digits);
+
+        /**
+         * @method getMinimumPayment - return the active pay to account minimum payment
+         * @return {String}
+         */
+        getMinimumPayment: function () {
+            return active_dest_account().minpmt;
         },
-        getSrcAccount: src_account,
-        getSrcAccountName: function () {
-            return src_account().name;
+
+        // Bank accounts
+
+        /**
+         * @method setActiveSrcNumber - set the active pay from account number
+         * @param newval {String} - the new number
+         */
+        setActiveSrcNumber: function (newval) {
+            active_src_number = newval;
         },
-        getSrcAccountNumberShort: function () {
-            return src_account().number.substr(-4);
+
+        /**
+         * @method activeSrcNumber - return the active pay from account number
+         * @return {String}
+         */
+        activeSrcNumber: function () {
+            return active_src_number;
         },
-        populate_src_acct_info: function() {
-            return populate_src_acct_info();
+
+        /**
+         * @method getSrcAccount - return the active pay from account
+         * @return {Account}
+         */
+        getSrcAccount: active_src_account,
+
+        /**
+         * @method getPayFrom
+         *
+         * @return {String} the display version of the pay_from account
+         */
+        getPayFrom: function () {
+            return active_src_account().pay_from;
         },
-        get_minimum_payment: function () {
-            if (dest_account().minpmt  != null) {
-                return dest_account().minpmt;
-            } else {
-                return 20;
-            }
-        },
-        populate_payment_due: populate_payment_due
+
+        /**
+         * @method addSrcAccount - add a new source (pay from) account
+         *
+         * @param name    {String} - the name of the account
+         * @param routing {String} - the routing number of the account
+         * @param number  {String} - the account number
+         */
+        addSrcAccount: function (name, routing, number) {
+            this.src_accounts.push(new Account({
+                name:    name,
+                routing: routing,
+                number:  number
+            }));
+        }
     };
 })(jQuery);
 
-/*
+
+// ----------------------------------------------------------------------------
+
+/**
+ * @module AccountData.Transactions
+ *
  * Account Transaction Loader
  *
  * Loads mock transaction data for a given CC number.
  *
- *   AccountData.transactions.display(cc_number);
- *   var data = AccountData.transactions.getData();
+ * @method display (cc_number[, callback])
+ * @method setDisplayCallback (callback)
+ * @method displayTransactions (data)
+ * @method getData ()
+ * @method getMerchants ()
+ *
+ * @example
+ *   AccountData.Transactions.setDisplayCallback(my_display_fn)
+ *   AccountData.Transactions.display(cc_number);
+ *   var data = AccountData.Transactions.getData();
  *   for (var i = 0; i < data.transactions.length; i += 1) {
  *       ...
  *   }
  *
- * transactionData.transactions => array of hash {
+ * transactionData.transactions => array of Transaction {
  *   id,
  *   name, address, city, state, zipcode,
  *   amount,
  *   dow, day, month, year, time, zone
  * }
  */
-AccountData.transactions = (function($) {
-    var data = null;
-    var active_cc_number = null;
+AccountData.Transactions = (function ($) {
+    var data             = null,
+        active_cc_number = null,
+        display_callback = function () {
+            alert('Display callback not set. Use setDisplayCallback.');
+        },
+        onload_callback  = null;
 
     // Return the URL for fetching the CC transaction information
-    var makeCCNumberUrl = function() {
+    function make_cc_transactions_url() {
         return AccountData.BaseUrl + '/transactions-' +
                active_cc_number + '.json';
-    };
+    }
 
-    // Return the HREF for displaying transaction details
-    var transactionShowHref = function(idx, transaction) {
-        var page = transaction.isPayment() ? '#payment-detail'
-                                            : '#transaction-detail';
-        return page + '?index=' + idx +
-               '&cc_number=' + AccountData.account.active_cc_number() +
-               '&transaction_id=' + transaction.id;
-    };
+    function display_transactions(data) {
+        display_callback(data);
+    }
 
-    // Return the HTML for the Date portion of the list item
-    var transactionCal = function(transaction) {
-        return '<div class="list-cal">' +
-               '<div class="cal-top">' + transaction.dowMonth() + '</div>' +
-               '<div class="cal-bot">' + transaction.day + '</div>' +
-               '</div>';
-    };
-
-    // Return a short description in 2 divs for the charge list
-    var transactionShort = function(transaction) {
-        var div = transactionCal(transaction) + '<div class="list-partial">';
-        if (transaction.isPayment()) {
-            div += '<div class="part-payment">' + transaction.name + '</div>';
-        } else {
-            div += '<div class="part-name">' + transaction.name + '</div>';
-            div += '<div class="part-addr">' + transaction.locationShort() +
-                   '</div>';
-        }
-        div += '</div>';
-        div += '<div class="list-amount">' + transaction.amount + '</div>';
-        return div;
-    };
-
-    // Display the list of transactions in the charges-list
-    var displayTransactions = function(data) {
-        var page = location.hash.replace(/\?.*/, '');
-        if (page === '#recent-transactions') {
-            var list = $("#charges-list");
-            list.empty();
-            var items = [];
-            for (var i = 0; i < data.transactions.length; i += 1) {
-                var transaction = data.transactions[i];
-                var show = transactionShort(transaction);
-                var href = transactionShowHref(i, transaction);
-                items.push('<li><a data-url="' + href + '" href="' + href + '">' + show + '</a></li>');
-            }
-            $(items.join('')).appendTo(list);
-            if (data.transactions.length > 0) {
-                try {
-                    list.listview('refresh');
-                } catch(err) {
-                    BankDemo.log('displayTransactions ERROR: ' + err);
-                }
-            }
-        }
-    };
-
-    // Display a specific transaction in the charge-detail
-    var displayTransactionHelper = function(transaction) {
-        if (transaction != null) {
-            var city = transaction.location();
-            if (transaction.isPayment()) {
-                $('#payment-amount').html(transaction.payment());
-                $('#payment-datetime').html(transaction.fullDate());
-            } else {
-                $('#amount').html(transaction.amount);
-                $('#datetime').html(transaction.fullDate());
-                $('#merchant').html(transaction.merchant);
-                if (transaction.address.length > 0) {
-                    $('#mlocation').html(transaction.address + '<br/>' + city);
-                } else {
-                    $('#mlocation').html(city);
-                }
-                if (city == "") {
-                    $('#map').attr('src', "");
-                } else {
-                    $('#map').attr('src',
-                        'https://maps.googleapis.com/maps/api/staticmap?center=' +
-                        encodeURIComponent(transaction.fullAddress()) +
-                        '&zoom=14&size=288x200&markers=' +
-                        encodeURIComponent(transaction.fullAddress()) +
-                        '&sensor=false');
-                }
-            }
-        }
-    };
-
-    var getData = function() {
-        if (active_cc_number) {
+    function get_data() {
+        if (active_cc_number !== null && typeof data[active_cc_number] !== 'undefined') {
             return data[active_cc_number];
         }
         return { transactions: [] };
-    };
+    }
 
-    var show_transactions = function(data, callback) {
-        var page = location.hash.replace(/\?.*/, '');
-        if (page === '#recent-transactions') {
-            displayTransactions(data);
-        }
+    function show_transactions(data, callback) {
+        display_transactions(data);
         if (typeof callback === 'function') {
             callback(data);
         }
-    };
+        if (typeof onload_callback === 'function') {
+            onload_callback();
+            onload_callback = null;
+        }
+    }
 
-    var load_cc_data = function(cc_number, callback) {
-        var url = makeCCNumberUrl(cc_number);
-        $.getJSON(url, function(results) {
-            var list = results.transactions;
-            data[cc_number] = {};
-            data[cc_number].transactions = list.map(function(obj) {
-              return new Transaction(obj);
-            });
+    function load_cc_data(cc_number, callback) {
+        $.getJSON(make_cc_transactions_url(cc_number), function (results) {
+            data[cc_number] = {
+                transactions: results.transactions.map(function (obj) {
+                    return new Transaction(obj);
+                })
+            };
             show_transactions(data[cc_number], callback);
         });
-    };
+    }
 
     return {
-        display: function(cc_number, callback) {
+        /**
+         * @method setOnLoadCallback - set a on-time callback when
+         * transactions are loaded.
+         *
+         * @param callback {Function} - a function which takes no params.
+         */
+        setOnLoadCallback: function (callback) {
+            if (data === null) {
+                onload_callback = callback;
+            } else if (typeof callback === 'function') {
+                callback();
+            }
+        },
+
+        /**
+         * @method display - load and display transactions for the given
+         * CC number and apply the optional callback to the data.
+         *
+         * @param cc_number {String} - the CC number
+         * @param callback {Function} - OPTIONAL function to apply to the
+         * transactions data after they have been displayed.  This callback
+         * should have a signature of "function (data)" and "data" is an
+         * object with a "transactions" attribute, which is an array of
+         * Transaction objects.
+         */
+        display: function (cc_number, callback) {
             active_cc_number = cc_number
             data = data || {};
             if (data[active_cc_number] === undefined) {
@@ -473,62 +391,91 @@ AccountData.transactions = (function($) {
                 show_transactions(data[cc_number], callback);
             }
         },
-        displayTransactions: displayTransactions,
-        displayTransactionHelper: displayTransactionHelper,
-/*
-        displayTransaction: function(cc_number, transaction_id, callback) {
-            var url = makeCCNumberUrl(cc_number);
-            $.getJSON(url, function(results) {
-                for (var i = 0; i < results.transactions.length; i += 1) {
-                    var transaction = results.transactions[i];
-                    if (transaction_id == transaction.id) {
-                        displayTransactionHelper(transaction);
-                        if (typeof callback === 'function') {
-                            callback(transaction);
-                        }
-                        break;
-                    }
-                }
-            });
+
+        /**
+         * @method setDisplayCallback - set the function used to display
+         * the list of transactions.
+         *
+         * @param callback {Function} - function to display the list of
+         * transactions.  This callback should have a signature of
+         * "function (data)" and "data" is an object with a "transactions"
+         * attribute, which is an array of Transaction objects.
+         */
+        setDisplayCallback: function (callback) {
+            display_callback = callback;
         },
-*/
-        getData: getData,
-        getMerchants: function() {
-            return $.unique(getData().transactions.map(function(transaction) {
+
+        /**
+         * @method displayTransactions - display the list of transactions.
+         *
+         * @param data - an object with a "transactions" attribute, which
+         * is an array of Transaction objects.
+         */
+        displayTransactions: display_transactions,
+
+        /**
+         * @method getData - get the transaction data for the current CC number.
+         *
+         * @return {Object} data has a "transactions" attribute, which is
+         * an array of Transaction objects.
+         */
+        getData: get_data,
+
+        /**
+         * @method getTransactions - return a new array of the transactions
+         */
+        getTransactions: function () {
+            return get_data().transactions.map(function (o) { return o; });
+        },
+
+        /**
+         * @method getMerchants - return a sorted list of merchants from the
+         * list of transactions.
+         *
+         * @return {Array} a sorted list of unique merchant names
+         */
+        getMerchants: function () {
+            return $.unique(get_data().transactions.map(function (transaction) {
                 return AccountData.Utils.merchantDecode(transaction.merchant);
             }).sort()).sort();
         }
      };
-})(jQuery);
+}(jQuery));
 
 
 
 // ----------------------------------------------------------------------------
-// Module: AccountData.Utils
-//
-// AccountData.Utils.timestampToObject(millis)
-// AccountData.Utils.transactionDate(transaction)
-// AccountData.Utils.transactionDateObject(transaction)
-//
-AccountData.Utils = (function($) {
-    var two_digit_string = function(num) {
+
+/**
+ * @module AccountData.Utils
+ *
+ * Utility functions for date, time and name manipulation.
+ *
+ * @method timestampToObject(millis)
+ * @method transactionDate(transaction)
+ * @method transactionDateObject(transaction)
+ * @method merchantDecode(merchant)
+ * @method dateDue(datedue)
+ * @method dateDueDatebox(datedue)
+ */
+AccountData.Utils = (function ($) {
+
+    /**
+     * @method two_digit_string - returns a number as a 2 digit,
+     * zero-padded string.
+     * @return {String}
+     */
+    function two_digit_string(num) {
         return (num < 10) ? '0' + num : '' + num;
     };
 
-    // Convert milliseconds into displayable date attributes
-    //
-    //  var millis = $.now();
-    //  var dt_obj = AccountData.Utils.timestampToObject(millis);
-    //
-    // @param timestamp - integer, time in millis
-    // @return object - day, dow, month, year attributes
-    //
-    var timestamp_to_object = function(timestamp) {
-        var date = new Date(timestamp);
-        var hour = two_digit_string(date.getHours());
-        var mins = two_digit_string(date.getMinutes());
-        var secs = two_digit_string(date.getSeconds());
-        var time = [hour, mins, secs].join(':');
+    function timestamp_to_object(timestamp) {
+        var date = new Date(timestamp),
+            hour = two_digit_string(date.getHours()),
+            mins = two_digit_string(date.getMinutes()),
+            secs = two_digit_string(date.getSeconds()),
+            time = [hour, mins, secs].join(':');
+
         return {
             day:      date.getDate(),
             dow:      date.getDOW(),
@@ -543,21 +490,14 @@ AccountData.Utils = (function($) {
         };
     };
 
-    // Convert 'daysago' or [dow, month, day, year, time, zone] into a
-    // timestamp (in milliseconds). Returns -1 if timestamp cannot be
-    // created.  Updates transaction object with 'timestamp' attribute.
-    //
-    // @param transaction - a transaction object from JSON
-    // @return timestamp in milliseconds
-    //
-    var transaction_date = function(transaction) {
+    var transaction_date = function (transaction) {
         var day_millis = 24 * 60 * 60 * 1000;
         if (transaction['timestamp'] !== undefined) {
             return transaction.timestamp;
         }
         if (transaction['daysago'] !== undefined) {
             var now = new Date();
-            var hrs = transaction.time.match(/\d+/g).map(function(a) {return a - 0});
+            var hrs = transaction.time.match(/\d+/g).map(function (a) {return a - 0});
             now.setHours(hrs[0], hrs[1]);
             var xtm = new Date(now.getTime() - transaction.daysago * day_millis);
             transaction.timestamp = xtm.getTime();
@@ -576,22 +516,15 @@ AccountData.Utils = (function($) {
         return -1; // Error in transaction object
     };
 
-    var merchant_decode = function(value) {
-        return $('<div/>').html(value).text();
-    }
 
-    // Return a date object for the given transaction
-    //
-    // @param transaction - a transaction object from JSON
-    // @return object - day, dow, month, year attributes
-    //
-    var transaction_date_object = function(transaction) {
-        return timestamp_to_object(transaction_date(transaction));
-    };
-
-    // @param datedue  - a string of either a day-offset or date
-    // @return tstamp - the due date in milliseconds
-    var parse_due_date = function(datedue) {
+    /**
+     * @method parse_due_date - parse a date in either in a format
+     * suitable for Date.parse, or as an offset in days from today.
+     *
+     * @param datedue {String} - either a day-offset or date
+     * @return {Number} the due date in milliseconds
+     */
+    function parse_due_date(datedue) {
         var tstamp = 0;
         if (datedue.match(/^-?\d+$/)) {
             tstamp = $.now() + (parseFloat(datedue) * 24 * 60 * 60 * 1000) * -1;
@@ -601,27 +534,76 @@ AccountData.Utils = (function($) {
         return tstamp;
     };
 
-    // @param datedue  - a string of either a day-offset or date
-    // @return due_date - a string like 'Jan 1, 1970'
-    var date_due = function(datedue) {
-        var obj = timestamp_to_object(parse_due_date(datedue));
-        return obj.month + ' ' + obj.day + ', ' + obj.year;
-    };
-
-    // @param datedue  - a string of either a day-offset or date
-    // @return due_date - a string like '1970-01-01'
-    var date_due_datebox = function(datedue) {
-        var obj = timestamp_to_object(parse_due_date(datedue));
-        return obj.year + '-' + obj.mm + '-' + obj.dd;
-    };
-
-
     return {
+        /**
+         * @method timestampToObject - Convert milliseconds into
+         * displayable date attributes.
+         *
+         * @param timestamp {Number} - time in millis
+         * @return {Object} day, dow, month, year, mm, dd, hhmmss,
+         *                  hours, minutes, seconds attributes
+         *
+         * @example
+         *  var millis = $.now();
+         *  var dt_obj = AccountData.Utils.timestampToObject(millis);
+         */
         timestampToObject: timestamp_to_object,
+
+        /**
+         * @method transactionDate - convert 'daysago' or [dow, month, day,
+         * year, time, zone] into a timestamp (in milliseconds). Returns -1
+         * if timestamp cannot be created.  Updates transaction object with
+         * 'timestamp' attribute.
+         *
+         * @param transaction {Transaction} - a transaction object from JSON
+         * @return {Number} timestamp in milliseconds
+         */
         transactionDate: transaction_date,
-        transactionDateObject: transaction_date_object,
-        merchantDecode: merchant_decode,
-        dateDue: date_due,
-        dateDueDatebox: date_due_datebox
+
+        /**
+	 * @method transactionDateObject - return a date object for
+         * the given transaction
+	 *
+	 * @param transaction - a transaction object from JSON
+	 * @return object - day, dow, month, year attributes
+	 *
+         */
+        transactionDateObject: function (transaction) {
+            return timestamp_to_object(transaction_date(transaction));
+        },
+
+        /**
+         * @method merchantDecode - return an HTML encoded value as regular text.
+         *
+         * @param value {String} - string with posible number of HTML entities
+         * @return {String} the string with HTML entities decoded
+         */
+        merchantDecode: function (value) {
+            return $('<div>').html(value).text();
+        },
+
+        /**
+         * @method dateDue - return a due date in "Month Day, Year"
+         * format.
+         *
+         * @param datedue  - a string of either a day-offset or date
+         * @return due_date - a string like 'Jan 1, 1970'
+         */
+        dateDue: function (datedue) {
+            var obj = timestamp_to_object(parse_due_date(datedue));
+            return obj.month + ' ' + obj.day + ', ' + obj.year;
+        },
+
+        /**
+         * @method dateDueDatebox - return a date suitable for using
+         * with the jQuery mobile datebox plugin
+         *
+         * @param datedue  - a string of either a day-offset or date
+         * @return due_date - a string like '1970-01-01'
+         */
+        dateDueDatebox: function (datedue) {
+            var obj = timestamp_to_object(parse_due_date(datedue));
+            return obj.year + '-' + obj.mm + '-' + obj.dd;
+        }
     };
 })(jQuery);

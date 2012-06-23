@@ -17,7 +17,7 @@
  *  - Public methods are camelCased
  *  - Private methods are lower_case_with_underscores
  *  - 'init' method is used to initialize each page
- *  - Prefer jQuery utility methods over for/for-in loops 
+ *  - Prefer jQuery utility methods over for/for-in loops
  *  - Avoid inline Javascript in HTML
  *  - Prefer post-loaded Javascript
  *  - === (strict) is preferred over == (coersive)
@@ -31,15 +31,29 @@
  *
  * -------------------------------------------------------------------------------
  */
+
+/**
+ * @namespace BankDemo
+ * @author    24/7, Inc. MM Team
+ * @version   1.03
+ */
+
+
+/**
+ * @module BankDemo Provides global application values and functions.
+ *
+ * @method getUrlVar
+ * @method log
+ * @method prompt
+ */
 var BankDemo = (function ($) {
     /**
-     * Return the href query (a.k.a search) string.
+     * @method get_url_search - Return the href query (a.k.a search) string.
      *
      * Note that jQuery Mobile doesn't support query parameter passing
      * to internal/imbedded pages, so the query string is appended to the
      * hash value (e.g. "#somePage?someId=1")
      *
-     * @method get_url_search
      * @param  {String}  url - optional url, defaults to window.location.href
      *
      * @return {Array}   an array of query key=value pairs or an empty array.
@@ -51,22 +65,45 @@ var BankDemo = (function ($) {
     };
 
     return {
+        /**
+         * The account number for the demo, which translates into the
+         * proper JSON file (e.g. 1.json) in the data/acctdata dir.
+         *
+         * NOTE: Only this needs to change when changing accounts.
+         */
         AccountNumber: 2,
 
+        /**
+         * The various audio prompts used in the appliaction.
+         *
+         * Moving the paths here allows us to easily make these
+         * paths customizable per client.
+         */
         Prompts: {
-            'mainmenu':     'audio/MainMenu.wav',
-            'payment':      'audio/MakeAPayment.wav',
-            'acctfrom':     'audio/SelectPaymentAccount.wav',
-            'acctadd':      'audio/AddNewAccount.wav',
-            'rt-01':        'audio/RT_RecentTransactions_01.wav',
-            'rt-02':        'audio/RT_RecentTransactions_02.wav',
-            'rt-03':        'audio/RT_RecentTransactions_03.wav',
-            'rt-detail-01': 'audio/RT_TransactionDetails_01.wav',
-            'rt-detail-02': 'audio/RT_TransactionDetails_02.wav',
-            'rt-detail-03': 'audio/RT_TransactionDetails_03.wav'
+            //'mainmenu':     'MainMenu.wav',
+            'mainmenu':     'RT_Menu_01.wav',
+            'payment':      'MakeAPayment.wav',
+            'acctfrom':     'SelectPaymentAccount.wav',
+            'acctadd':      'AddNewAccount.wav',
+            'rt-01':        'RT_RecentTransactions_01.wav',
+            'rt-02':        'RT_RecentTransactions_02.wav',
+            'rt-03':        'RT_RecentTransactions_03.wav',
+            'rt-detail-01': 'RT_TransactionDetails_01.wav',
+            'rt-detail-02': 'RT_TransactionDetails_02.wav',
+            'rt-detail-03': 'RT_TransactionDetails_03.wav'
         },
 
-        getUrlVar: function (name) { 
+        /**
+         * @method getUrlVar - Parses the url search string into query
+         * parameters and returns the value of the given URL param name.
+         *
+         * @param name {String} - the desired parameter name
+         * @return {String}     - the parameter value or null if the parameter
+         *                        isn't found.
+         * @example
+         * var id = BankDemo.getUrlVar('product_id');
+         */
+        getUrlVar: function (name) {
             var params = $.grep(get_url_search(), function (param) {
                 return param.indexOf('=') > 0 && param.split('=')[0] === name;
             });
@@ -76,6 +113,13 @@ var BankDemo = (function ($) {
             return null;
         },
 
+        /**
+         * @method log - A wrapper function around the NativeBridge.log
+         * and console.log functions.
+         *
+         * @param msg {String} - the message to print.
+         * @return {Integer}   - 1 if console.log exists, 0 otherwise
+         */
         log: function (msg) {
             NativeBridge.log(msg);
             if (console && console.log) {
@@ -85,9 +129,18 @@ var BankDemo = (function ($) {
             return 0;
         },
 
+        /**
+         * @method prompt - Play the audio prompt defined for the given page.
+         *
+         * @param page {String} - a page listed in the BankDemo.Prompts hash.
+         * @return {Boolean}    - true if the page prompt exists.
+         *
+         * @example
+         * BankDemo.prompt('main-menu');
+         */
         prompt: function (page) {
             if (typeof BankDemo.Prompts[page] !== 'undefined') {
-                NativeBridge.playAudio(BankDemo.Prompts[page]);
+                NativeBridge.playAudio('audio/' + BankDemo.Prompts[page]);
                 return true;
             }
             BankDemo.log('[prompt] cannot find WAV for "' + screen + '"');
@@ -97,30 +150,47 @@ var BankDemo = (function ($) {
 }(jQuery));
 
 
-// Recent Transaction Specific Configuration
+/**
+ * @module BankDemo.RT - Recent Transaction Specific Configuration
+ */
 BankDemo.RT = (function ($) {
     var root_url = $.mobile.path.get(window.location.href),
-        dynamic;
-
-    dynamic = root_url.replace('/content/', '/perl/') +
-              'grammars/dynamicgram.pl';
+        dynamic  = root_url.replace('/content/', '/perl/') +
+                   'grammars/dynamicgram.pl';
 
     return {
+        /**
+         * @method merchantDelim - Returns the delimiter used to send
+         * records to our dynamic grammar generation script.
+         */
         merchantDelim: function () {
             return '<DELIM>';
         },
+
+        /**
+         * @method getRootUrl - Return the "absolute" path to our current
+         * app location from the point of view of the browser.
+         */
         getRootUrl: function () {
             return root_url;
         },
+
+        /**
+         * @method getDynamicGrammarUrl - Returns the location of the
+         * dynamic grammar generator.
+         */
         getDynamicGrammarUrl: function () {
             return dynamic;
         }
     }
 }(jQuery));
 
+
 /**
- * BankDemo Controller Class - from which all other controllers will be
+ * @class BankDemo.Controller - from which all other controllers will be
  * an instance of and are expecte to extend.
+ *
+ * @constructor
  */
 BankDemo.Controller = function (name) {
     name = name || 'Controller';
@@ -131,11 +201,73 @@ BankDemo.Controller = function (name) {
 };
 
 BankDemo.Controller.prototype = (function ($) {
+    var _cc_card_img = null;
+
+    function cc_card_img() {
+        if (_cc_card_img === null) {
+            _cc_card_img = $('<img>', {
+                'src':   Client.card_image,
+                'class': 'card-img'
+            });
+        }
+        return _cc_card_img;
+    }
+
+    function cc_list_select(selected, disabled) {
+        var select = $('<select>', {
+            'id': 'card-choice',
+            'name': 'card-choice',
+            'data-mini': 'true'
+        });
+        if (disabled) {
+            select.attr('disabled', 'disabled');
+        }
+        return select;
+    }
+
+
+    function cc_list_select_option(account, selected) {
+        var option = $('<option>', {'value': account.number});
+
+        option.text(account.card_display);
+
+        if (account.number === selected) {
+            option.attr('selected', 'selected');
+        }
+
+        return option;
+    }
+
+    function cc_list_display(id, disabled) {
+        var div = $('#' + id).empty(),
+            num = AccountData.Account.activeCcNumber(),
+            sel = cc_list_select(num, disabled).appendTo(div);
+
+        // Add the CC image
+        $(cc_card_img()).appendTo(div);
+
+        // Add the cards numbers to the list
+        $(AccountData.Account.getData().dest_accounts).each( function (i, account) {
+            cc_list_select_option(account, num).appendTo(sel);
+        });
+
+        try {
+            sel.selectmenu();
+        } catch(err) {
+            BankDemo.log('ccListDisplay: ERROR: ' + err);
+        }
+
+        sel.on('change', function () {
+            AccountData.Account.setActiveCcNumber( sel[0].value );
+        });
+
+        sel.change();
+        return sel;
+    }
+
     return {
         /**
-         * Logging prefix setter
-         *
-         * @method setLoggingPrefix
+         * @method setLoggingPrefix - Logging prefix setter
          * @param  {String}  prefix  The logging prefix.
          */
         setLoggingPrefix: function (prefix) {
@@ -144,19 +276,17 @@ BankDemo.Controller.prototype = (function ($) {
         },
 
         /**
-         * Logging method for debugging.
-         *
-         * @method log
-         * @param  {String}  msg  The message to log.
+         * @method log - Logging method for debugging.
+         * @param msg {String} - The message to log.
+         * @see BankDemo#log for return value
          */
         log: function (msg) {
             return BankDemo.log(this._l_prefix + ': ' + msg);
         },
 
         /**
-         * Clear recognition errors counter.
-         *
-         * @method clearRecoErrors
+         * @method clearRecoErrors - Clear recognition errors counter.
+         * @return this
          */
         clearRecoErrors: function () {
             this._rec_errs = 0;
@@ -164,24 +294,26 @@ BankDemo.Controller.prototype = (function ($) {
         },
 
         /**
-         * Increment the recognition errors counter and log the given messa
-         *
-         * @method recoError
-         * @param  {String}  msg  The message to log.
+         * @method recoError - Increment the recognition errors counter and
+         * log the given messa
+         * @param  msg {String} - The message to log.
+         * @see BankDemo.Controller#log for return value
          */
         recoError: function (msg) {
             this._rec_errs += 1;
             return this.log(msg);
         },
 
+        /**
+         * @method recoErrors
+         * @return the number reco errors.
+         */
         recoErrors: function () {
             return this._rec_errs;
         },
 
         /**
-         * Checks for recognition errors.
-         *
-         * @method hasRecoErrors
+         * @method hasRecoErrors - Checks for recognition errors.
          * @return {Boolean}  true if there are recognition errors recorded
          */
         hasRecoErrors: function () {
@@ -190,14 +322,14 @@ BankDemo.Controller.prototype = (function ($) {
         },
 
         /**
-         * Change the page to the page with the given page ID.
-         *
-         * @method changePage
-         * @param  {String}  page  The page ID to change to, e.g. '#main'
+         * @method changePage - Change the page to the page with the
+         * given page ID.
+         * @param page {String} - The page ID to change to, e.g. '#main'
          */
         changePage: function (page) {
+            NativeBridge.cancelAudio();
             this.clearRecoErrors();
-            $.mobile.changePage($(page));
+            $.mobile.changePage($(page), {transition: 'none'});
         },
 
         prompted: function () {
@@ -215,13 +347,21 @@ BankDemo.Controller.prototype = (function ($) {
         },
 
         setGrammar: function (message, grammar, handler) {
+	    this.log('Setting grammar to: ' + grammar);
             NativeBridge.setMessage(message);
             NativeBridge.setGrammar(grammar, null, handler);
         },
 
         beforeHide: function () {
-            NativeBridge.cancelAudio();
+            //NativeBridge.cancelAudio();
             return false;
+        },
+
+        onAccountLoad: function (data, id, disabled, callback) {
+            var dropdown = cc_list_display(id, disabled);
+            if (typeof callback === 'function') {
+                callback(dropdown, data);
+            }
         },
 
         ccChangeHandlers: function () {
@@ -238,12 +378,10 @@ BankDemo.Controller.prototype = (function ($) {
             return this;
         },
 
-        initDropdown: function (dropdown_id, is_inactive) {
-            if (is_inactive) {
-                AccountData.account.initDropdown(dropdown_id, true);
-            } else {
-                AccountData.account.initDropdown(dropdown_id, false, this.ccChangeHandlers());
-            }
+        initDropdown: function (dropdown_id, disabled) {
+            AccountData.Account.initDropdown(this.onAccountLoad,
+                                             dropdown_id, disabled,
+                                             this.ccChangeHandlers());
         }
     };
 }(jQuery));
@@ -267,7 +405,6 @@ jQuery.extend(BankDemo.RT.Controller.prototype, (function ($) {
     }
 
     function init_payment_options() {
-        BankDemo.log('init_payment_options');
         var div = $('#list-payment-amount'),
             cur_balance,
             min_payment,
@@ -276,8 +413,8 @@ jQuery.extend(BankDemo.RT.Controller.prototype, (function ($) {
         div.empty();
 
         // get the current balance and minumum payment values
-        var cur_balance = AccountData.account.get_current_balance();
-        var min_payment = AccountData.account.get_minimum_payment();
+        var cur_balance = AccountData.Account.getCurrentBalance();
+        var min_payment = AccountData.Account.getMinimumPayment();
 
         // Only continue if min_payment has a value
         if (min_payment === null) {
@@ -302,7 +439,7 @@ jQuery.extend(BankDemo.RT.Controller.prototype, (function ($) {
         }
 
         list.on('change', function() {
-            var balance = AccountData.account.get_current_balance();
+            var balance = AccountData.Account.getCurrentBalance();
             if (list[0].value === balance) {
                 set_payment_options('CURRENT<br/>BALANCE', cur_balance);
                 $('#pmtamount').val(cur_balance);
@@ -321,14 +458,8 @@ jQuery.extend(BankDemo.RT.Controller.prototype, (function ($) {
         return list;
     }
 
-    function set_default_payment_date() {
-        $('#pmtdate').val( (new Date()).toShortDate() );
-    }
-
-    // TODO figure out how to get this out of AccountData.account.listCards
     function populate_payment_due() {
-        BankDemo.log('populate_payment_due');
-        var acct = AccountData.account.getDestAccount(),
+        var acct = AccountData.Account.getDestAccount(),
             date = AccountData.Utils.dateDue(acct.datedue)
 
         // set values in main menu
@@ -340,29 +471,24 @@ jQuery.extend(BankDemo.RT.Controller.prototype, (function ($) {
     return {
         initPaymentOptions: init_payment_options,
 
-        setDefaultPaymentDate: set_default_payment_date,
-
         populatePaymentDue: populate_payment_due,
 
         dynamicGrammarUrl: function(type) {
-            var merchants = AccountData.transactions.getMerchants();
+            var merchants = AccountData.Transactions.getMerchants();
             merchants = merchants.join( BankDemo.RT.merchantDelim() );
 
             return BankDemo.RT.getDynamicGrammarUrl() +
-                   '?type' + type + '&merchants=' + 
+                   '?type=' + type + '&merchants=' +
                    encodeURIComponent(merchants);
         },
 
         ccChangeHandler: function (dropdown, data) {
             // Callback sets onchange handler for dropdown
             dropdown.on('change', function () {
-                BankDemo.log('ccChangeHandler fired for '+$(this).parents('.card-info').attr('id'));
                 init_payment_options();
-                set_default_payment_date();
                 populate_payment_due();
                 TransactionList.init();
             });
-            BankDemo.log('ccChangeHandler calling change on dropdown');
             // Simulate on onchange event
             dropdown.change();
         }
@@ -379,48 +505,93 @@ BankDemo.MainMenuController = new BankDemo.RT.Controller('MainMenuController');
 jQuery.extend(BankDemo.MainMenuController, (function ($) {
     var self = BankDemo.MainMenuController,
         set_grammar,
-        grammar_handler;
+        grammar_handler,
+        type = 'mainmenu';
+
+    set_grammar = function (message) {
+        self.setGrammar(message, self.dynamicGrammarUrl(type), grammar_handler);
+    };
 
     grammar_handler = function (result) {
-        var interpretation;
+        var interp, filed, value, comparison, label;
 
-        self.log(JSON.stringify(result));
+        self.log('reco result: ' + JSON.stringify(result));
 
         if (result === null || result.length === 0) {
-            set_grammar('What?');
+            self.recoError('no reco result');
 
         } else {
-            interpretation = result[0].interpretation;
+            interp = result[0].interpretation;
 
-            switch (interpretation.action) {
+            switch (interp.action) {
+            case 'recent transactions':
+                self.changePage('#recent-transactions');
+                break;
+
+            case 'filter':
+                field      = interp.field.toLowerCase();
+                value      = interp.value;
+                comparison = interp.comparison.toLowerCase();
+
+                switch (field) {
+                case 'amount':
+                    TransactionList.filterByAmount(value, comparison);
+                    label = [comparison.capitalize(), value].join(' ');
+                    BankDemo.RecentTransactionsController.addFilterButton('amount', label);
+                    break;
+
+                case 'date':
+                    value = parseFloat(value);
+                    TransactionList.filterByDate(value, comparison);
+                    label = date_filter_label(value, comparison);
+                    BankDemo.RecentTransactionsController.addFilterButton('date', label);
+                    break;
+
+                case 'merchant':
+                    TransactionList.filterByMerchant(value);
+                    BankDemo.RecentTransactionsController.addFilterButton('merchant', value);
+                    break;
+                }
+
+                self.changePage('#recent-transactions');
+                break;
+
             case 'make payment':
-                $.mobile.changePage($('#payment'));
+                self.changePage('#payment');
+                break;
+
+            case 'find atm':
+            case 'rewards':
+            case 'contact':
+            case 'report missing':
+                self.recoError('not implemented yet');
+                set_grammar(null);
                 break;
 
             case 'no':
+                self.clearRecoErrors();
                 set_grammar('How can I help you today?');
                 break;
 
             default:
-                self.log('unknown action: "' + interpretation.action + '"');
-                set_grammar("I'm sorry, I didn't get that.");
+                self.recoError('unknown action: "' + interp.action + '"');
                 break;
             }
         }
-    }
 
-    set_grammar = function (message) {
-        self.setGrammar(message, 'grammars/mainmenu.grxml', grammar_handler);
-    }
+        if (self.hasRecoErrors()) {
+            set_grammar("I'm sorry, I didn't get that.");
+        }
+    };
 
     return {
         beforeShow: function () {
-            TransactionList.clearFilters();
+            BankDemo.RecentTransactionsController.removeFilterButtons();
         },
 
         onShow: function () {
             self.initDropdown('last-4-digits-main', false);
-            set_grammar('Would you like to make a payment?');
+            set_grammar('How may I help you?');
             if (! self.prompted()) {
                 BankDemo.prompt('mainmenu');
                 self.setPrompted(true);
@@ -428,7 +599,6 @@ jQuery.extend(BankDemo.MainMenuController, (function ($) {
         },
 
         init: function () {
-            self.addCcChangeHandler(self.ccChangeHandler);
             var page = $('#main-menu');
             if (page.length > 0) {
                 page.on('pagebeforeshow', self.beforeShow);
@@ -444,6 +614,7 @@ jQuery.extend(BankDemo.MainMenuController, (function ($) {
                     BankDemo.ChatController.setChatBubbleImage('payments');
                     self.changePage('#payment');
                 });
+                self.addCcChangeHandler(self.ccChangeHandler);
                 return true;
             }
             return false;
@@ -468,65 +639,156 @@ jQuery.extend(BankDemo.RecentTransactionsController, (function ($) {
         self.setGrammar(message, self.dynamicGrammarUrl(type), grammar_handler);
     };
 
-    grammar_handler = function (result) {
-        if (result != null && result.length > 0) {
-            var interp = result[0].interpretation;
-            var action = interp.action.toLowerCase();
-            self.log('reco result: "' + action + '"');
+    // <div><span>Vons</span><span class="cancel">&nbsp;</span></div>
+    function add_filter_button(type, title) {
+        var container = $('#search-terms'),
+            button_id = 'search-term-' + type,
+            button    = $('#' + button_id);
 
-            if (action === 'sort') {
-                self.log('sort' + ', field: ' + interp.field +
-                                  ', order: ' + interp.order);
+        if (container) {
+            if (button.length > 0) {
+                button.remove();
+            }
+            container.slideDown();
+
+            // Button container
+            button = $('<div>').attr('id', button_id).appendTo(container);
+
+            // Label for the button
+            $('<span>').html(title).appendTo(button);
+
+            // Cancel icon
+            $('<span>', {'class': 'cancel'}).html('&nbsp;').appendTo(button);
+
+            // Add an onClick handler to remove this button an the filter
+            button.on('click',  function() {
+                $('#' + button_id).remove();
+                if ($('#search-terms').children().length === 0) {
+                    container.slideUp();
+                }
+                TransactionList.removeFilter(type);
+                set_grammar(null);
+                if (typeof button_callback === 'function') {
+                    button_callback();
+                }
+            });
+
+            return true;
+        }
+        return false;
+    }
+
+    function date_filter_label(value, direction) {
+        var str = '', date;
+
+        if (typeof value === 'number') {
+            date = AccountData.Utils.timestampToObject(value);
+            str  = date.month + ' ' + date.day;
+        } else {
+            str  = value.match(/[JFMASOND][a-z]{2} \d+/)[0];
+        }
+
+        if (direction !== undefined && direction.length > 0) {
+            return direction.capitalize() + ' ' + str;
+        }
+
+        return str;
+    }
+
+    function remove_filter_buttons() {
+       TransactionList.clearFilters();
+       $(['date', 'merchant', 'amount', 'sort']).each(function(type) {
+           $('#search-term-' + type).remove();
+       });
+       $('#search-terms').empty();
+       $('#search-terms').slideUp();
+    }
+
+    grammar_handler = function (result) {
+        var interp, action, column, direction,
+            field, value, comparison, label, transaction;
+
+        self.log('reco result: ' + JSON.stringify(result));
+
+        if (result === null || result.length === 0) {
+            self.recoError('no reco result');
+
+        } else {
+            interp = result[0].interpretation;
+            action = interp.action.toLowerCase();
+
+            switch (action) {
+            case 'sort':
+                column    = interp.field.toLowerCase();
+                direction = interp.order.toLowerCase();
+
+                TransactionList.sort(column, direction);
+                add_filter_button('sort', 'Sort ' + column);
 
                 self.clearRecoErrors();
-                TransactionList.sort(interp.field.toLowerCase(),
-                                     interp.order.toLowerCase());
                 set_grammar(null)
+                break;
 
-            } else if (action === 'filter') {
-                self.log('filter' + ', field: '      + interp.field +
-                                    ', comparison: ' + interp.comparison +
-                                    ', value: '      + interp.value);
+            case 'filter':
+                field      = interp.field.toLowerCase();
+                value      = interp.value;
+                comparison = interp.comparison.toLowerCase();
 
-                var field = interp.field.toLowerCase();
-                var comparison = interp.comparison.toLowerCase();
-                var value = interp.value;
-
-                if (field === 'date') {
-                    value = parseFloat(value);
-                    self.log('date: ' + (new Date(value)).toLocaleString());
-                    TransactionList.filterByDate(value, comparison);
-
-                } else if (field === 'merchant') {
-                    TransactionList.filterByMerchant(value);
-
-                } else if (field === 'amount') {
+                switch (field) {
+                case 'amount':
                     TransactionList.filterByAmount(value, comparison);
+                    label = [comparison.capitalize(), value].join(' ');
+                    add_filter_button('amount', label);
+                    break;
+
+                case 'date':
+                    value = parseFloat(value);
+                    TransactionList.filterByDate(value, comparison);
+                    label = date_filter_label(value, comparison);
+                    add_filter_button('date', label);
+                    break;
+
+                case 'merchant':
+                    TransactionList.filterByMerchant(value);
+                    add_filter_button('merchant', value);
+                    break;
                 }
 
                 self.clearRecoErrors();
                 set_grammar(null);
+                break;
 
-            } else if (action === 'detail') {
-                self.log('detail, idx: ' + interp.idx);
+            case 'detail':
+                transaction = TransactionList.get(parseInt(interp.idx));
+                BankDemo.TransactionDetailController.displayTransactionDetails(transaction);
 
-                TransactionList.showTransaction(parseInt(interp.idx));
                 self.changePage('#transaction-detail');
+                break;
 
-            } else if (action === 'chat') {
+            case 'chat':
                 BankDemo.ChatController.setDoneButtonLink();
-                self.changePage('#chat');
 
-            } else {
+                self.changePage('#chat');
+                break;
+
+            case 'make payment':
+                self.changePage('#payment');
+                break;
+
+            case 'main menu':
+            case 'go back':
+                self.changePage('#main-menu');
+                break;
+
+            default:
                 self.recoError('unhandled action: "' + action + '"');
+                break;
             }
-        } else {
-            self.recoError('no reco result');
         }
 
         if (self.hasRecoErrors()) {
             set_grammar(null);
-            if (self.reco_errors() === 1) {
+            if (self.recoErrors() === 1) {
                 BankDemo.prompt('rt-02');
             } else {
                 BankDemo.prompt('rt-03');
@@ -534,37 +796,95 @@ jQuery.extend(BankDemo.RecentTransactionsController, (function ($) {
         }
     };
 
-    function go_back() {
-        TransactionList.clearFilters();
-        self.changePage('#main-menu');
-    };
+    // Return the HREF for displaying transaction details
+    function transaction_href(idx, transaction) {
+        var page = transaction.isPayment() ? '#payment-detail'
+                                            : '#transaction-detail';
+        return page + '?index=' + idx +
+               '&cc_number=' + AccountData.Account.activeCcNumber() +
+               '&transaction_id=' + transaction.id;
+    }
+
+    // Return the HTML for the Date portion of the list item
+    function transaction_cal(transaction) {
+        return '<div class="list-cal">' +
+               '<div class="cal-top">' + transaction.dowMonth() + '</div>' +
+               '<div class="cal-bot">' + transaction.day + '</div>' +
+               '</div>';
+    }
+
+    // Return a short description in 2 divs for the charge list
+    function transaction_short(transaction) {
+        var div = transaction_cal(transaction) + '<div class="list-partial">';
+        if (transaction.isPayment()) {
+            div += '<div class="part-payment">' + transaction.name + '</div>';
+        } else {
+            div += '<div class="part-name">' + transaction.name + '</div>';
+            div += '<div class="part-addr">' + transaction.locationShort() + '</div>';
+        }
+        div += '</div>';
+        div += '<div class="list-amount">' + transaction.amount + '</div>';
+        return div;
+    }
+
+    // Display the list of transactions in the transactions-list
+    function display_transactions(data) {
+        var page = location.hash.replace(/\?.*/, '');
+        if (page === '#recent-transactions') {
+            var list = $("#transactions-list");
+            list.empty();
+            var items = [];
+            for (var i = 0; i < data.transactions.length; i += 1) {
+                var transaction = data.transactions[i];
+                var show = transaction_short(transaction);
+                var href = transaction_href(i, transaction);
+                items.push('<li><a data-url="'+href+'" href="'+href+'">'+show+'</a></li>');
+            }
+            $(items.join('')).appendTo(list);
+            if (data.transactions.length > 0) {
+                try {
+                    list.listview('refresh');
+                } catch(err) {
+                    BankDemo.log('display_transactions ERROR: ' + err);
+                }
+            }
+        }
+    }
 
     return {
         beforeShow: function () {
-            //self.log('beforeShow');
-            self.clearRecoErrors();
-            set_grammar(null);
+            AccountData.Transactions.setOnLoadCallback( set_grammar );
+            self.initDropdown('last-4-digits-recent-transactions', false);
         },
 
         onShow: function () {
-            //self.log('onShow');
+            self.clearRecoErrors();
             if (! self.prompted()) {
                 BankDemo.prompt('rt-01');
                 self.setPrompted(true);
             }
-            self.initDropdown('last-4-digits-recent-transactions', false);
-            $('#charges-list').listview('refresh');
+            $('#transactions-list').listview('refresh');
         },
 
+        addFilterButton: add_filter_button,
+        removeFilterButtons: remove_filter_buttons,
+
         init: function () {
-            self.addCcChangeHandler(self.ccChangeHandler);
             var page = $('#recent-transactions');
             if (page.length > 0) {
                 page.on('pagebeforeshow', self.beforeShow);
                 page.on('pageshow',       self.onShow);
                 page.on('pagebeforehide', self.beforeHide);
-                $('#back-to-main').on('click', go_back);
-                TransactionList.setFilterButtonCallback( set_grammar );
+                $('#back-to-main').on('click', function () {
+                    remove_filter_buttons();
+                    self.changePage('#main-menu');
+                });
+                $('#pay-now').on('click', function () {
+                    remove_filter_buttons();
+                    self.changePage('#payment');
+                });
+                self.addCcChangeHandler(self.ccChangeHandler);
+                AccountData.Transactions.setDisplayCallback(display_transactions);
                 return true;
             };
             return false;
@@ -573,34 +893,108 @@ jQuery.extend(BankDemo.RecentTransactionsController, (function ($) {
 }(jQuery)));
 
 
+//
+// Transaction Detail Controller
+//
 BankDemo.TransactionDetailController = new BankDemo.RT.Controller('TransactionDetailController');
 
 jQuery.extend(BankDemo.TransactionDetailController, (function ($) {
     var self = BankDemo.TransactionDetailController,
         set_grammar,
-        grammar_handler,
-        type = 'recenttransactions';
+        grammar_handler;
 
     set_grammar = function (message) {
         self.setGrammar(message, 'grammars/transactiondetail.grxml', grammar_handler);
     };
 
+    /**
+     * @method display_payment_details - populate payment information on the
+     * payment details page.
+     * @param transaction {Transaction}
+     * @see Transaction
+     */
+    function display_payment_details(transaction) {
+        if (transaction === null) {
+            throw 'display_payment_details: transaction is null';
+        }
+        if (! transaction.isPayment()) {
+            throw 'display_payment_details: transaction is not payment';
+        }
+        $('#payment-amount').html(transaction.payment());
+        $('#payment-datetime').html(transaction.fullDate());
+    }
+
+    /**
+     * @method display_charge_details - populate charge information on the
+     * charge details page.
+     * @param transaction {Transaction}
+     * @see Transaction
+     */
+    function display_charge_details(transaction) {
+        var map_url  = '';
+
+        if (transaction === null) {
+            throw 'display_charge_details: transaction is null';
+        }
+        if (transaction.isPayment()) {
+            throw 'display_charge_details: transaction is a payment';
+        }
+
+        if (transaction.location() !== '') {
+            map_url = 'https://maps.googleapis.com/maps/api/staticmap?center=' +
+                      encodeURIComponent(transaction.fullAddress()) +
+                      '&zoom=14&size=288x200&markers=' +
+                      encodeURIComponent(transaction.fullAddress()) +
+                      '&sensor=false';
+        }
+
+        $('#charge-amount').text(transaction.payment());
+        $('#charge-datetime').text(transaction.fullDate());
+        $('#charge-merchant').text(transaction.merchant);
+        $('#charge-location').html(transaction.htmlAddress());
+        $('#map').attr('src', map_url);
+    }
+
+    /**
+     * @method display_transaction_details - display transaction details.
+     * @param transaction {Transaction}
+     * @see Transaction
+     */
+    function display_transaction_details(transaction) {
+        if (transaction === null) {
+            throw 'display_transaction_details: transaction is null';
+        }
+        if (transaction.isPayment()) {
+            self.changePage('#payment-detail',     { changeHash: false });
+            display_payment_details(transaction);
+        } else {
+            self.changePage('#transaction-detail', { changeHash: false });
+            display_charge_details(transaction);
+        }
+    }
+
     grammar_handler = function (result) {
-        if (result != null && result.length > 0) {
-            var interpretation = result[0].interpretation.toLowerCase();
-            self.log('reco result: ' + interpretation);
+        var interpretation;
+
+        self.log('reco result: ' + interpretation);
+
+        if (result === null || result.length === 0) {
+            self.recoError('no reco result');
+
+        } else {
+            interpretation = result[0].interpretation.toLowerCase();
 
             switch (interpretation) {
             case 'next':
+                display_transaction_details(TransactionList.next());
                 self.clearRecoErrors();
-                set_grammar();
-                TransactionList.showNextTransaction();
+                set_grammar(null);
                 break;
 
             case 'previous':
+                display_transaction_details(TransactionList.prev());
                 self.clearRecoErrors();
-                set_grammar();
-                TransactionList.showPrevTransaction();
+                set_grammar(null);
                 break;
 
             case 'dispute':
@@ -620,13 +1014,11 @@ jQuery.extend(BankDemo.TransactionDetailController, (function ($) {
                 self.recoError('unhandled: "' + interpretation + '"');
                 break;
             }
-        } else {
-            self.recoError('no reco result');
         }
 
         if (self.hasRecoErrors()) {
-            set_grammar();
-            if (self.reco_errors === 1) {
+            set_grammar(null);
+            if (self.recoErrors() === 1) {
                 BankDemo.prompt('rt-detail-02');
             } else {
                 BankDemo.prompt('rt-detail-03');
@@ -634,12 +1026,12 @@ jQuery.extend(BankDemo.TransactionDetailController, (function ($) {
         }
     };
 
-    function detail_init (dropdown_container_id) {
+    function detail_init(dropdown_container_id) {
         var pages = ['transaction-detail', 'payment-detail'],
             page  = $.mobile.activePage.attr('id'),
             index = BankDemo.getUrlVar('index'),
             trans = BankDemo.getUrlVar('transaction_id'),
-            ccnum = AccountData.account.active_cc_number();
+            ccnum = AccountData.Account.activeCcNumber();
 
         if ($.inArray(page, pages) > -1) {
             self.initDropdown(dropdown_container_id, true);
@@ -647,16 +1039,15 @@ jQuery.extend(BankDemo.TransactionDetailController, (function ($) {
             $('#dispute-button').attr('href', '#dispute?cc_number=' + ccnum +
                                               '&transaction_id=' + trans);
 
-            TransactionList.showTransaction(index);
+            display_transaction_details(TransactionList.get(index));
         }
     }
 
     return {
         beforeShow: function () {
-            detail_init('last-4-digits-detail');
             self.clearRecoErrors();
             NativeBridge.setMessage(null);
-            set_grammar();
+            detail_init('last-4-digits-detail');
         },
 
         beforeShowPayments: function () {
@@ -664,6 +1055,7 @@ jQuery.extend(BankDemo.TransactionDetailController, (function ($) {
         },
 
         onShow: function () {
+            set_grammar(null);
             if (! self.prompted()) {
                 self.setPrompted(true);
                 BankDemo.prompt('rt-detail-01');
@@ -673,6 +1065,8 @@ jQuery.extend(BankDemo.TransactionDetailController, (function ($) {
         onDispute: function () {
             self.changePage('#dispute');
         },
+
+        displayTransactionDetails: display_transaction_details,
 
         init: function () {
             self.addCcChangeHandler(self.ccChangeHandler);
@@ -711,10 +1105,16 @@ jQuery.extend(BankDemo.TransactionDisputeController, (function ($) {
         self.setGrammar(message, 'grammars/dispute.grxml', grammar_handler);
     };
 
-    grammarHandler = function (result) {
-        if (result != null && result.length > 0) {
-            var interpretation = result[0].interpretation.toLowerCase();
-            self.log('reco result: ' + interpretation);
+    grammar_handler = function (result) {
+        var interpretation;
+
+        self.log('reco result: ' + interpretation);
+
+        if (result === null || result.length === 0) {
+            self.recoError('no reco result');
+
+        } else {
+            interpretation = result[0].interpretation.toLowerCase();
 
             switch (interpretation) {
             case 'back to list':
@@ -739,12 +1139,10 @@ jQuery.extend(BankDemo.TransactionDisputeController, (function ($) {
                 self.recoError('unhandled: "' + interpretation + '"');
                 break;
             }
-        } else {
-            self.recoError('no reco result');
         }
 
         if (self.hasRecoErrors()) {
-            set_grammar();
+            set_grammar(null);
         }
     };
 
@@ -778,10 +1176,11 @@ jQuery.extend(BankDemo.TransactionDisputeController, (function ($) {
     }
 }(jQuery)));
 
+
 // Payment Controller
 //
 //
-BankDemo.PaymentController = new BankDemo.Controller('PaymentController');
+BankDemo.PaymentController = new BankDemo.RT.Controller('PaymentController');
 
 jQuery.extend(BankDemo.PaymentController, (function ($) {
     var self = BankDemo.PaymentController,
@@ -794,29 +1193,33 @@ jQuery.extend(BankDemo.PaymentController, (function ($) {
 
     function update_estimated_date() {
         var date = new Date($('#pmtdate').val()),
-            acct = AccountData.account.getDestAccount(),
+            acct = null,
             tstamp = 0,
             datedueobj;
 
-        // get the pmt date and add 1 day to it
-        date.addDays(1);
-        $('#estdate').html(date.toShortDate());
+        if (AccountData.Account.activeCcNumber() !== null) {
+            acct = AccountData.Account.getDestAccount();
 
-        if (acct.datedue.match(/^-?\d+$/)) {
-            tstamp = $.now() + (parseFloat(acct.datedue) * 24 * 60 * 60 * 1000) * -1;
-        } else {
-            tstamp = Date.parse(acct.datedue);
-        }
+            // get the pmt date and add 1 day to it
+            date.addDays(1);
+            $('#estdate').html(date.toShortDate());
 
-        // check if the estimated post date is past due date
-        // if so, then update background
-        datedueobj = new Date(tstamp);
-        if (date > datedueobj) {
-            $('#estdatesection').addClass('late');
-            $('#estdatelbl').addClass('late');
-        } else {
-            $('#estdatesection').removeClass('late');
-            $('#estdatelbl').removeClass('late');
+            if (acct.datedue.match(/^-?\d+$/)) {
+                tstamp = $.now() + (parseFloat(acct.datedue) * 24 * 60 * 60 * 1000) * -1;
+            } else {
+                tstamp = Date.parse(acct.datedue);
+            }
+
+            // check if the estimated post date is past due date
+            // if so, then update background
+            datedueobj = new Date(tstamp);
+            if (date > datedueobj) {
+                $('#estdatesection').addClass('late');
+                $('#estdatelbl').addClass('late');
+            } else {
+                $('#estdatesection').removeClass('late');
+                $('#estdatelbl').removeClass('late');
+            }
         }
     }
 
@@ -830,11 +1233,10 @@ jQuery.extend(BankDemo.PaymentController, (function ($) {
         } else if (date_rel !== null) {
             date_val = date_rel;
         }
-  
+
         if (date_val !== null) {
             $('#pmtdate').val(date_val);
             update_estimated_date();
-            //AccountData.account.updateEstDate();
             return 1;
         }
         return 0;
@@ -844,9 +1246,9 @@ jQuery.extend(BankDemo.PaymentController, (function ($) {
         var payment = null;
 
         if (amount === 'current_balance') {
-            payment = AccountData.account.get_current_balance();
+            payment = AccountData.Account.getCurrentBalance();
         } else if (amount === 'minimum_due') {
-            payment = AccountData.account.get_minimum_payment();
+            payment = AccountData.Account.getMinimumPayment();
         } else if (amount.match(/^\d+(\.\d+)?$/)) {
             payment = amount;
         }
@@ -858,22 +1260,23 @@ jQuery.extend(BankDemo.PaymentController, (function ($) {
         return 0;
     }
 
+    // TODO: Replace table with divs, spans, etc.
     function populate_src_acct_info() {
         var div      = $('#src-acct-info'),
-            src_acct = AccountData.account.getSrcAccount(),
+            src_acct = AccountData.Account.getSrcAccount(),
             summary  = '<table width="100%" border="0">' +
                        '<tr><td class="payment-account-label">Payment Account</td>';
 
         // display balance only if available
-        if (src_acct.balance != null) {
+        if (src_acct.balance) {
              summary += '<td class="available-balance-label">Avail Balance</td>';
         }
 
-        summary += '</tr><tr><td class="payment-account-data">' + src_acct.name +
-                   ' ... ' + src_acct.number.slice(-4) + '</td>';
+        summary += '</tr><tr><td class="payment-account-data">' + src_acct.pay_from +
+                   '</td>';
 
         // display balance only if available
-        if (src_acct.balance != null) {
+        if (src_acct.balance) {
             summary += '<td class="available-balance-data">$' + src_acct.balance + '</td>';
         }
         summary += '</tr></table>';
@@ -890,10 +1293,12 @@ jQuery.extend(BankDemo.PaymentController, (function ($) {
             source         = '',
             message        = null;
 
-        self.log('[MakeAPayment] ' + JSON.stringify(result));
+        self.log('reco result: ' + JSON.stringify(result));
 
         if (result === null || result.length === 0) {
-            set_grammar('What?');
+            self.recoError('no reco result');
+            set_gramar("I'm sorry, I didn't get that.")
+
         } else {
             interpretation = result[0].interpretation;
 
@@ -928,7 +1333,7 @@ jQuery.extend(BankDemo.PaymentController, (function ($) {
                         message = "I'm sorry, I didn't get that date.";
                     }
                     if (source !== 'none') {
-                        AccountData.account.set_active_src_number(source);
+                        AccountData.Account.setActiveSrcNumber(source);
                         populate_src_acct_info();
                     }
                     if (amount !== 'none' && change_pay_amount(amount) === 0) {
@@ -943,7 +1348,7 @@ jQuery.extend(BankDemo.PaymentController, (function ($) {
                 if (source === 'none') {
                     self.changePage('#acct-from');
                 } else {
-                    AccountData.account.set_active_src_number(source);
+                    AccountData.Account.setActiveSrcNumber(source);
                     populate_src_acct_info();
                     set_grammar(null);
                 }
@@ -969,7 +1374,7 @@ jQuery.extend(BankDemo.PaymentController, (function ($) {
     }
 
     function set_payment_amount() {
-        var acct = AccountData.account.getDestAccount();
+        var acct = AccountData.Account.getDestAccount();
 
         // Right now sets to minimum balance if a value is set in the json
         // Otherwise sets to the current balance
@@ -981,28 +1386,32 @@ jQuery.extend(BankDemo.PaymentController, (function ($) {
     }
 
     function set_payment_hidden_date() {
-        var acct = AccountData.account.getDestAccount(),
+        var acct = AccountData.Account.getDestAccount(),
             date = AccountData.Utils.dateDueDatebox(acct.datedue);
         try {
             $('#pmtdatehidden').data('datebox').options.highDates = [date];
         } catch(err) {
-            BankDemo.log(' ERROR set_payment_hidden_date: ' + err);
+            self.log(' ERROR set_payment_hidden_date: ' + err);
         }
         return date;
     }
 
+    function set_default_payment_date() {
+        $('#pmtdate').val( (new Date()).toShortDate() );
+        update_estimated_date();
+    }
+
+
     return {
+        setDefaultPaymentDate: set_default_payment_date,
         populateSrcAcctInfo: populate_src_acct_info,
 
         beforeShow: function () {
             self.initDropdown('last-4-digits-payment', false);
-            populate_src_acct_info();
-            self.setDefaultPaymentDate();
-            set_payment_amount();
-            set_payment_hidden_date();
         },
 
         onShow: function () {
+            update_estimated_date();
             set_grammar(null);
             if (! self.prompted) {
                 BankDemo.prompt('payment');
@@ -1011,7 +1420,6 @@ jQuery.extend(BankDemo.PaymentController, (function ($) {
         },
 
         init: function () {
-            self.addCcChangeHandler(self.ccChangeHandler);
             var page = $('#payment');
             if (page.length > 0) {
                 page.on('pagebeforeshow', self.beforeShow);
@@ -1035,6 +1443,14 @@ jQuery.extend(BankDemo.PaymentController, (function ($) {
                         }
                     }
                 });
+                self.addCcChangeHandler(self.ccChangeHandler);
+                self.addCcChangeHandler(function () {
+                    populate_src_acct_info();
+                    update_estimated_date();
+                    set_payment_amount();
+                    set_payment_hidden_date();
+                });
+                set_default_payment_date();
                 return true;
             }
             return false;
@@ -1052,18 +1468,18 @@ jQuery.extend(BankDemo.PaymentAccountFromController, (function ($) {
         grammar_handler;
 
     set_grammar = function (message) {
-        self.setGrammar(message, 'grammars/make_payment.grxml', grammar_handler);
+        self.setGrammar(message, 'grammars/payment_src.grxml', grammar_handler);
     };
 
     grammar_handler = function (result) {
         var interpretation;
 
-        self.log(JSON.stringify(result));
-
         if (result === null || result.length === 0) {
-            acctfrom_setGrammar('What?');
+            self.recoError('no reco result');
 
         } else {
+            self.log('reco result: ' + JSON.stringify(result));
+
             interpretation = result[0].interpretation;
 
             switch (interpretation) {
@@ -1083,24 +1499,28 @@ jQuery.extend(BankDemo.PaymentAccountFromController, (function ($) {
             default:
                 // set the new active source account
                 // and then refresh the list
-                AccountData.account.set_active_src_number(interpretation);
+                AccountData.Account.set_active_src_number(interpretation);
                 self.changePage('#payment');
                 break;
             }
         }
+
+        if (self.hasRecoErrors()) {
+            set_grammar("I'm sorry, I didn't get that.");
+        }
     };
 
-    function account_item(name, number, selected) {
+    function account_item(account, selected) {
         var item = $('<li>'),
             span = $('<span>');
 
-        span.text(name + ' ... ' + number.slice(-4));
+        span.text(account.pay_from);
         span.attr('class', 'available-payment-account');
 
-        if ($.inArray(number, [selected, AccountData.account.active_src_number()]) < 0) {
+        if ($.inArray(account.number, [selected, AccountData.Account.activeSrcNumber()]) < 0) {
             span.appendTo(item);
             item.on('click', function () {
-                AccountData.account.set_active_src_number(number);
+                AccountData.Account.setActiveSrcNumber(account.number);
                 self.changePage('#payment');
             });
         } else {
@@ -1116,15 +1536,15 @@ jQuery.extend(BankDemo.PaymentAccountFromController, (function ($) {
             item = $('<li>').attr('data-icon', 'plus').addClass('add-payment-account'),
             anch = $('<a>').attr('href', '#acct-add'),
             span = $('<span>').addClass('add-payment-account').text('Add New Account'),
-            selected = AccountData.account.active_src_number();
+            selected = AccountData.Account.activeSrcNumber();
 
         // Build the list
         div.empty();
 
         list.appendTo(div);
 
-        $(AccountData.account.getData().src_accounts).each( function(i, acct) {
-            account_item(acct.name, acct.number, selected).appendTo(list);
+        $(AccountData.Account.getData().src_accounts).each( function(i, account) {
+            account_item(account, selected).appendTo(list);
         });
         span.appendTo(anch);
         anch.appendTo(item);
@@ -1140,7 +1560,6 @@ jQuery.extend(BankDemo.PaymentAccountFromController, (function ($) {
     return {
         beforeShow: function () {
             self.initDropdown('last-4-digits-acctfrom', true)
-            show_available_accounts();
         },
 
         onShow: function () {
@@ -1160,6 +1579,7 @@ jQuery.extend(BankDemo.PaymentAccountFromController, (function ($) {
                 $('#acct-from-back-button').on('click', function () {
                     self.changePage('#payment');
                 });
+                self.addCcChangeHandler(show_available_accounts);
                 return 1;
             }
             return 0;
@@ -1179,21 +1599,22 @@ jQuery.extend(BankDemo.PaymentAccountAddController, (function ($) {
         self.setGrammar(message, 'grammars/add_account.grxml', grammar_handler);
     };
 
-    grammmar_handler = function (result) {
+    grammar_handler = function (result) {
         var interpretation = '',
             routing_number = '',
             account_number = '';
 
-        self.log(JSON.stringify(result));
-
         if (result === null || result.length === 0) {
-            set_grammar('What?');
+            self.recoError('no reco result');
 
         } else {
+            self.log('reco result: ' + JSON.stringify(result));
+
             interpretation = result[0].interpretation;
 
             switch (interpretation.SLOTS.action) {
             case 'submit':
+                self.clearRecoErrors();
                 self.addAccount();
                 break;
 
@@ -1212,6 +1633,7 @@ jQuery.extend(BankDemo.PaymentAccountAddController, (function ($) {
                     $('#newacctnumber').val(account_number);
                 }
 
+                self.clearRecoErrors();
                 set_grammar(null);
                 break;
 
@@ -1225,10 +1647,13 @@ jQuery.extend(BankDemo.PaymentAccountAddController, (function ($) {
                 break;
 
             default:
-                self.log('unknown action: "' + interpretation.SLOTS.action + '"');
-                set_grammar('What?');
+                self.recoError('unknown action: "' + interpretation.SLOTS.action + '"');
                 break;
             }
+        }
+
+        if (self.hasRecoErrors()) {
+            set_grammar("I'm sorry, I didn't get that.");
         }
     };
 
@@ -1238,24 +1663,23 @@ jQuery.extend(BankDemo.PaymentAccountAddController, (function ($) {
             acctnum     = $('#newacctnumber').val();
 
         // check if routing number is valid
-        if (!(isNumber(acctrouting) && acctrouting.length == 9)) {
+        if (!(isNumber(acctrouting) && acctrouting.length === 9)) {
             return 1;
         }
 
         // check account number
-        if (!(isNumber(acctnum) && acctnum.length == 10)) {
+        if (!(isNumber(acctnum) && acctnum.length === 10)) {
             return 2;
         }
 
-        AccountData.account.getData().src_accounts.push({
-            name:    acctname,
-            routing: acctrouting,
-            number:  acctnum
-        });
-        AccountData.account.setActiveSrcNumber(acctnum);
+        // Add new source account and update state
+        AccountData.Account.addSrcAccount(acctname, acctrouting, acctnum);
+        AccountData.Account.setActiveSrcNumber(acctnum);
+
+        // Update the srouce account informatio on the "Make a Payment" page
         BankDemo.PaymentController.populateSrcAcctInfo();
 
-        // Clear out the fields
+        // Clear out the "Add an account" form fields
         $('#newacctname').removeAttr('value');
         $('#newacctrouting').removeAttr('value');
         $('#newacctnumber').removeAttr('value');
@@ -1277,7 +1701,7 @@ jQuery.extend(BankDemo.PaymentAccountAddController, (function ($) {
         },
 
         addAccount: function () {
-            switch (AccountData.account.addAcct()) {
+            switch (add_account()) {
             case 1:
                 set_grammar('Invalid routing number');
                 break;
@@ -1316,18 +1740,12 @@ jQuery.extend(BankDemo.PaymentConfirmController, (function ($) {
     var self = BankDemo.PaymentConfirmController;
 
     function create_confirmation() {
-        var pay_to   = AccountData.account.getDestAccountName() +
-                 ' ' + AccountData.account.getClientCardPrefix() +
-                 ' ' + AccountData.account.getDestAccountNumberShort(),
-            pay_from = AccountData.account.getSrcAccountName() + ' ... ' +
-                       AccountData.account.getSrcAccountNumberShort();
-
         $('#confirmation-number').text('TBW' + Math.floor(Math.random() * 100000001));
-        $('#confirmation-pay-to').text( pay_to );
-        $('#confirmation-pay-from').text( pay_from );
-        $('#confirmation-pay-amount').text( $('#pmtamount').val() );
-        $('#confirmation-pay-date').text( $('#pmtdate').val() );
-        $('#confirmation-post-date').text( $('#estdate').html() );
+        $('#confirmation-pay-to').text(AccountData.Account.getPayTo() );
+        $('#confirmation-pay-from').text(AccountData.Account.getPayFrom() );
+        $('#confirmation-pay-amount').text('$' + $('#pmtamount').val());
+        $('#confirmation-pay-date').text($('#pmtdate').val());
+        $('#confirmation-post-date').text($('#estdate').html());
     }
 
     return {
@@ -1338,7 +1756,6 @@ jQuery.extend(BankDemo.PaymentConfirmController, (function ($) {
 
         onShow: function () {
             create_confirmation();
-            //AccountData.account.createConfirmationMsg();
         },
 
         init: function () {
@@ -1346,11 +1763,12 @@ jQuery.extend(BankDemo.PaymentConfirmController, (function ($) {
             if (page.length > 0) {
                 page.on('pagebeforeshow', self.beforeShow);
                 page.on('pageshow',       self.onShow);
-                //page.on('pagebeforeshow', self.beforeShow);
                 $('#payment-confirm-back-button').on('click', function () {
+                    BankDemo.PaymentController.setDefaultPaymentDate();
                     self.changePage('#payment');
                 });
                 $('#payment-confirm-continue-button').on('click', function () {
+                    BankDemo.PaymentController.setDefaultPaymentDate();
                     BankDemo.SurveyController.setBackButtonLink();
                     self.changePage('#survey');
                 });
@@ -1369,7 +1787,46 @@ jQuery.extend(BankDemo.PaymentConfirmController, (function ($) {
 BankDemo.SurveyController = new BankDemo.Controller('SurveyController');
 
 jQuery.extend(BankDemo.SurveyController, (function ($) {
-    var self = BankDemo.SurveyController;
+    var self = BankDemo.SurveyController,
+        set_grammar,
+        grammar_handler;
+
+    set_grammar = function (message) {
+        self.setGrammar(message, 'grammars/survey.grxml', grammar_handler);
+    };
+
+    grammar_handler = function (result) {
+        var interpretation;
+
+        if (result === null || result.length === 0) {
+            self.recoError('no reco result');
+
+        } else {
+            self.log('reco result: ' + JSON.stringify(result));
+
+            interpretation = result[0].interpretation.toLowerCase();
+
+            switch (interpretation) {
+            case 'main menu':
+            case 'submit':
+                self.changePage('#main-menu');
+                break;
+
+            case 'chat':
+                BankDemo.ChatController.setDoneButtonLink();
+                self.changePage('#chat');
+                break;
+
+            default:
+                self.recoError('unhandled: "' + interpretation + '"');
+                break;
+            }
+        }
+
+        if (self.hasRecoErrors()) {
+            set_grammar("I'm sorry, I didn't get that.");
+        }
+    };
 
     function reset_rating() {
         $('.rating li span').removeClass('star-act').addClass('star');
@@ -1483,11 +1940,11 @@ BankDemo.ApplicationController = new BankDemo.Controller('Application');
 jQuery.extend(BankDemo.ApplicationController, (function ($) {
     return {
         load: function () {
-            NativeBridge.onInitialize(function () {});
         },
 
         init: function () {
-            AccountData.account.init(BankDemo.AccountNumber);
+            NativeBridge.onInitialize(function () {});
+            AccountData.Account.init(BankDemo.AccountNumber);
             BankDemo.MainMenuController.init();
             BankDemo.RecentTransactionsController.init();
             BankDemo.TransactionDetailController.init();
@@ -1503,7 +1960,6 @@ jQuery.extend(BankDemo.ApplicationController, (function ($) {
 }(jQuery)));
 
 
-
 function dispute() {
     $.mobile.changePage($('#dispute'));
 }
@@ -1514,4 +1970,12 @@ function  survey() {
 function    chat() {
     BankDemo.ChatController.setDoneButtonLink();
     $.mobile.changePage($('#chat'));
+}
+
+function utter(obj) {
+    NativeBridge._setGrammarResult([{
+        'name': 'grammar',
+        'confidence': '0.7437955',
+        'interpretation': obj
+    }]);
 }

@@ -1,7 +1,11 @@
-// MODEL: Transaction
-//
-// Encapsulates Date display formats
-// Encapsulates Location display formats
+/**
+ * @class Transaction
+ *
+ * Encapsulates Date display formats
+ * Encapsulates Location display formats
+ *
+ * @constructor
+ */
 var Transaction = function(obj) {
     $.extend(this, obj);
     var date_obj = AccountData.Utils.transactionDateObject(this);
@@ -11,8 +15,11 @@ var Transaction = function(obj) {
 
 Transaction.prototype = (function ($) {
     return {
-        // Return "City, ST"
-        locationShort: function() {
+        /**
+         * @method locationShort
+         * @return "City, ST"
+         */
+        locationShort: function () {
             if (this['_location_short'] === undefined) {
                 var parts = [];
                 if (this.city.length > 0) {
@@ -26,8 +33,11 @@ Transaction.prototype = (function ($) {
             return this._location_short;
         },
 
-        // Return "City, ST Zipcode"
-        location: function() {
+        /**
+         * @method location
+         * @return "City, ST Zipcode"
+         */
+        location: function () {
             if (this['_location_full'] === undefined) {
                 var parts = [];
                 var short = this.locationShort();
@@ -42,22 +52,45 @@ Transaction.prototype = (function ($) {
             return this._location_full;
         },
 
-        // Return "Address, City, ST Zipcode"
-        fullAddress: function() {
+        /**
+         * @method fullAddress
+         * @return "Address, City, ST Zipcode"
+         */
+        fullAddress: function () {
             if (this['_full_addr'] === undefined) {
                 this._full_addr = this.address + ', ' + this.location();
             }
             return this._full_addr;
         },
 
-        dowMonth: function() {
+        /**
+         * @method htmlAddress
+         * @return "Address<br />City, ST Zipcode"
+         */
+        htmlAddress: function (delim) {
+            delim = delim || '<br />';
+            if (this.address.length === 0) {
+                return this.location();
+            }
+            return this.address + delim + this.location();
+        },
+
+        /**
+         * @method dowMonth
+         * @return "DOW, Month"
+         */
+        dowMonth: function () {
             if (this['_dow_mon'] === undefined) {
                 this._dow_mon = this.dow   + ', ' + this.month;
             }
             return this._dow_mon;
         },
 
-        fullDate: function() {
+        /**
+         * @method fullDate
+         * @return "DOW, Month Day, Year Time Zone"
+         */
+        fullDate: function () {
             if (this['_full_date'] === undefined) {
                 this._full_date = this.dowMonth() + ' ' +
                                   this.day   + ', ' +
@@ -68,14 +101,22 @@ Transaction.prototype = (function ($) {
             return this._full_date;
         },
 
-        isPayment: function() {
+        /**
+         * @method isPayment
+         * @return {Boolean} true if this transaction is a payment.
+         */
+        isPayment: function () {
             if (this['_is_payment'] === undefined) {
                 this._is_payment = this.name.match(/^payment$/i) !== null;
             }
             return this._is_payment;
         },
 
-        payment: function() {
+        /**
+         * @method payment
+         * @return {String} the monetary amount for this transaction.
+         */
+        payment: function () {
             if (this.isPayment()) {
                 return this.amount.replace('-', '');
             }
@@ -85,19 +126,27 @@ Transaction.prototype = (function ($) {
 }(jQuery));
 
 
+/**
+ * @class TransactionFilter
+ *
+ * This is a filter state singleton object more than a module.
+ */
 var TransactionFilter = (function () {
-    var is_array = function (obj) {
-        return Object.prototype.toString.apply(obj) === '[object Array]';
-    };
-
     return {
         amount:   [],
         date:     [],
         merchant: [],
         sort:     [],
         count:     0,
-        update_filter: function (type, value) {
-            if (is_array(this[type]) && is_array(value)) {
+
+        /**
+         * @method updateFilter - add a filter value to a filter type
+         * @param type {String} - one of: amount, date, merchant, sort
+         * @param value {String} the filter value
+         * @return the new count of filter or -1 if type is not valid
+         */
+        updateFilter: function (type, value) {
+            if (isArray(this[type]) && isArray(value)) {
                 var old_len = this[type].length,
                     new_len = value.length;
                 this[type]  = value;
@@ -106,20 +155,49 @@ var TransactionFilter = (function () {
             }
             return -1;
         },
+
+        /**
+         * @method addAmountFilter - add a less/greater than amount filter
+         * @param value {String} - the value limit
+         * @param direction {String} - 'greater than', 'less than', 'equal to', etc.
+         */
         addAmountFilter: function (value, direction) {
-            return this.update_filter('amount', [value, direction]);
+            return this.updateFilter('amount', [value, direction]);
         },
+
+        /**
+         * @method addDateFilter - add a less/greater than date filter
+         * @param value {String} - the value limit
+         * @param direction {String} - 'greater than', 'less than', 'equal to', etc.
+         */
         addDateFilter: function (value, direction) {
-            return this.update_filter('date', [value, direction]);
+            return this.updateFilter('date', [value, direction]);
         },
+
+        /**
+         * @method addMerchantFilter - add an exact match filter to merchants
+         * @param value {String} - the merchant match value
+         */
         addMerchantFilter: function (value) {
-            return this.update_filter('merchant', [value]);
+            return this.updateFilter('merchant', [value]);
         },
+
+        /**
+         * @method addSortFilter - add a 'sort by' filter
+         * @param value {String} - one of: 'date', 'amount', 'merchant'
+         * @param direction {String} - 'asc', 'desc', etc.
+         */
         addSortFilter: function (value, direction) {
-            return this.update_filter('sort', [value, direction]);
+            return this.updateFilter('sort', [value, direction]);
         },
+
+        /**
+         * @method removeFilter - remove all the filters for the given type
+         * @param type {String} - one of: amount, date, merchant, sort
+         * @return the number of filters removed
+         */
         removeFilter: function (type) {
-            if (is_array(this[type])) {
+            if (isArray(this[type])) {
                 var old_len = this[type].length;
                 this[type]  = [];
                 this.count -= old_len;
@@ -127,6 +205,11 @@ var TransactionFilter = (function () {
             }
             return 0;
         },
+
+        /**
+         * @method clearFilters - clear all filter information
+         * @return the number of filters cleared
+         */
         clearFilters: function () {
             var prev_count = this.count;
             this.amount   = [];
@@ -148,64 +231,40 @@ var TransactionList = (function($) {
     var filters = TransactionFilter;
     var button_callback = null;
 
-/*
-    var filters = {
-        'date':     [],
-        'merchant': [],
-        'amount':   [],
-        'sort':     []
-    };
-*/
 
-
-    var init = function(callback) {
-        data    = null;
-        cc_num  = AccountData.account.active_cc_number();
-
-        AccountData.transactions.display(cc_num, function(data) {
-            if (typeof callback === 'function') {
-                callback(data);
+    function get_data() {
+        if (data === null) {
+            try {
+                BankDemo.log('reloading data');
+                data = {
+                    transactions: AccountData.Transactions.getTransactions()
+                };
+                apply_filters();
+            } catch(error) {
+                throw 'ERROR in get_data(): ' + error;
             }
-            getData();
-        });
-    };
+        }
+        return data;
+    }
 
 
-    var getData = function() {
-      if (data === null || data === undefined) {
-          try {
-              BankDemo.log('TransactionList.getData: loading data, calling apply_filters');
-              var list = AccountData.transactions.getData().transactions;
-              data = { transactions: list.map(function(obj) { return obj; }) };
-              apply_filters();
-          } catch(err) {
-              BankDemo.log(err);
-          }
-      }
-      return data;
-    };
-
-
-    var length = function() {
-        return getData().transactions.length;
-    };
-
-    var amount_to_float = function(value) {
-        return parseFloat( value.match(/-?\d+(\.\d+)?$/)[0] );
-    };
+    function length() {
+        return get_data().transactions.length;
+    }
 
 
     // Conver HTML into text and return a list of possible values
-    var merchant_decode = function(value) {
-        var text = $('<div/>').html(value).text().toLowerCase();
-        var list = [text];
+    function merchant_decode(value) {
+        var text = $('<div/>').html(value).text().toLowerCase(),
+            list = [text];
         if (text.match(/ & /)) {
             list.push( text.replace(/ & /g, ' and ') );
         }
         return list;
-    };
+    }
 
-    var date_value_to_timestamp = function(value) {
+
+    function date_value_to_timestamp(value) {
         if (typeof value === 'number') {
             return value;
         }
@@ -223,24 +282,24 @@ var TransactionList = (function($) {
             return parseFloat(value);
         }
         return -1;
-    };
+    }
 
 
-    var _filter_by_date = function(value, direction) {
+    function filter_by_date(value, direction) {
         var list = [];
         value = date_value_to_timestamp(value);
 
         switch (direction) {
         case 'since':
         case 'after':
-            list = $.grep(getData().transactions, function(transaction) {
+            list = $.grep(get_data().transactions, function(transaction) {
                 return transaction_date(transaction) >= value;
             });
             break;
 
         case 'prior to':
         case 'before':
-            list = $.grep(getData().transactions, function(transaction) {
+            list = $.grep(get_data().transactions, function(transaction) {
                 return transaction_date(transaction) < value;
             });
             break;
@@ -248,70 +307,32 @@ var TransactionList = (function($) {
         case 'on':
         default:
             var days_end = value + 24 * 60 * 60 * 1000;
-            list = $.grep(getData().transactions, function(transaction) {
+            list = $.grep(get_data().transactions, function(transaction) {
                 var trans_date = transaction_date(transaction);
                 return (trans_date >= value) && (trans_date < days_end);
             });
             break;
         }
-        getData().transactions = list;
-    };
+        get_data().transactions = list;
+    }
 
-
-    var refresh_list = function() {
-        BankDemo.log('TransactionList.refresh_list');
-        var now = Date.now();
-        AccountData.transactions.displayTransactions(getData());
-        BankDemo.log('TransactionList.refresh_list took ' + (Date.now() - now) + ' ms');
-        return length();
-    };
-
-
-    var date_filter_label = function(value, direction) {
-        var str = '';
-        if (typeof value === 'number') {
-            var date = AccountData.Utils.timestampToObject(value);
-            str = date.month + ' ' + date.day;
-        } else {
-            str = value.match(/[JFMASOND][a-z]{2} \d+/)[0];
-        }
-        if (direction !== undefined && direction.length > 0) {
-            return direction.capitalize() + ' ' + str;
-        }
-        return str;
-    };
-
-    /**
-     * Filter by date
-     *
-     * @param value     {Number} a date value in milliseconds
-     * @param direction {String} 'after' or 'before'
-     */
-    var filter_by_date = function(value, direction) {
-        //filters['date'] = [value, direction];
-        filters.addDateFilter(value, direction);
-        add_filter_cancel_button('date', date_filter_label(value, direction));
-        _filter_by_date(value, direction);
-        return refresh_list();
-    };
-
-
-    var _filter_by_amount = function(value, direction) {
+    function filter_by_amount(value, direction) {
         var list = [];
-        value = amount_to_float(value);
+        value = value.toFloat();
 
         switch (direction) {
         case 'over':
+        case 'more than':
         case 'greater than':
-            list = $.grep(getData().transactions, function(transaction) {
-                return amount_to_float(transaction.amount) > value;
+            list = $.grep(get_data().transactions, function(transaction) {
+                return transaction.amount.toFloat() > value;
             });
             break;
 
         case 'under':
         case 'less than':
-            list = $.grep(getData().transactions, function(transaction) {
-                return amount_to_float(transaction.amount) < value;
+            list = $.grep(get_data().transactions, function(transaction) {
+                return transaction.amount.toFloat() < value;
             });
             break;
 
@@ -319,102 +340,78 @@ var TransactionList = (function($) {
         case 'around':
             var upper_limit = value + 0.50;
             var lower_limit = value - 0.50;
-            list = $.grep(getData().transactions, function(transaction) {
-                var amount = amount_to_float(transaction.amount);
+            list = $.grep(get_data().transactions, function(transaction) {
+                var amount = transaction.amount.toFloat();
                 return amount > lower_limit && amount < upper_limit;
             });
             break;
 
         case 'exactly':
         default:
-            list = $.grep(getData().transactions, function(transaction) {
-                return amount_to_float(transaction.amount) == value;
+            list = $.grep(get_data().transactions, function(transaction) {
+                return transaction.amount.toFloat() === value;
             });
             break;
         }
 
-        getData().transactions = list;
-    };
+        get_data().transactions = list;
+    }
 
-
-    // Filter by amount
-    //
-    // @param value      a numeric value
-    // @param direction  'greater than' or 'less than'
-    //
-    var filter_by_amount = function(value, direction) {
-        //filters['amount'] = [value, direction];
-        filters.addAmountFilter(value, direction);
-        var label = [capitalize(direction), value].join(' ');
-        add_filter_cancel_button('amount', label);
-        _filter_by_amount(value, direction);
-        return refresh_list();
-    };
-
-
-    var _filter_by_merchant = function(value) {
+    function filter_by_merchant(value) {
         var what = value.toLowerCase();
-        var list = $.grep(getData().transactions, function(transaction) {
+        var list = $.grep(get_data().transactions, function(transaction) {
             var candidates = merchant_decode(transaction.name);
             return $.inArray(what, candidates) >= 0;
         });
-        getData().transactions = list;
-    };
+        get_data().transactions = list;
+    }
 
 
-    // Filter by merchant name
-    //
-    // @param value   a string value
-    //
-    var filter_by_merchant = function(value) {
-        //filters['merchant'] = [value];
-        filters.addMerchantFilter(value);
-        add_filter_cancel_button('merchant', value);
-        _filter_by_merchant(value);
-        return refresh_list();
-    };
+    // Amount sorting functions
 
+    function amount_sort_up(a, b) {
+        return a.amount.toFloat() - b.amount.toFloat();
+    }
 
-    var transaction_date = function(transaction) {
-        return AccountData.Utils.transactionDate(transaction);
-    };
+    function amount_sort_down(a, b) {
+        return b.amount.toFloat() - a.amount.toFloat();
+    }
 
-    // sorting functions
-    var amount_sort_up = function(a, b) {
-        return amount_to_float(a.amount) - amount_to_float(b.amount);
-    };
+    // Merchant sorting functions
 
-    var amount_sort_down = function(a, b) {
-        return amount_to_float(b.amount) - amount_to_float(a.amount);
-    };
-
-    var string_cmp = function(a, b) {
+    function string_cmp(a, b) {
         if (a > b) {
             return 1;
         } else if (b > a) {
             return -1;
         }
         return 0;
-    };
+    }
 
-    var merchant_sort_up = function(a, b) {
+    function merchant_sort_up(a, b) {
         return string_cmp(a.name, b.name);
-    };
+    }
 
-    var merchant_sort_down = function(a, b) {
+    function merchant_sort_down(a, b) {
         return string_cmp(b.name, a.name);
-    };
+    }
 
-    var date_sort_up = function(a, b) {
+    // Date sorting functions
+
+    function transaction_date(transaction) {
+        return AccountData.Utils.transactionDate(transaction);
+    }
+
+    function date_sort_up(a, b) {
         return transaction_date(a) - transaction_date(b);
-    };
+    }
 
-    var date_sort_down = function(a, b) {
+    function date_sort_down(a, b) {
         return transaction_date(b) - transaction_date(a);
-    };
+    }
 
 
-    var _sort = function(column, direction) {
+    function sort_by(column, direction) {
         var callback;
         var desc = direction === 'desc';
         switch (column) {
@@ -425,200 +422,205 @@ var TransactionList = (function($) {
             callback = desc ? date_sort_down : date_sort_up;
             break;
         case 'merchant':
-            callback = desc ?  merchant_sort_down : merchant_sort_up;
+            callback = desc ? merchant_sort_down : merchant_sort_up;
             break;
         }
-        getData().transactions.sort(callback);
-    };
+        get_data().transactions.sort(callback);
+    }
 
 
-    // Sort a column
-    var sort = function(column, direction) {
-      filters.addSortFilter(column, direction);
-      add_filter_cancel_button('sort', 'Sort ' + column);
-      _sort(column, direction);
-      return refresh_list();
-    };
+    function refresh_list() {
+        AccountData.Transactions.displayTransactions(get_data());
+        return length();
+    }
 
-
-    var clear_filters = function() {
-        if (filters.clearFilters() > 0) {
-          $(['date', 'merchant', 'amount', 'sort']).each(function(type) {
-              $('#search-term-' + type).remove();
-          });
-          $('#search-terms').empty();
-          $('#search-terms').slideUp();
-          data = null;
-          getData();
-        }
-    };
-
-
-    var reset = function() {
-        clear_filters();
-        return refresh_list();
-    };
-
-
-    var apply_filters = function() {
+    function apply_filters() {
+        BankDemo.log('applying filters...');
         if (filters.date.length > 0) {
-            _filter_by_date( filters.date[0], filters.date[1] );
+            BankDemo.log('apply_filters: filter by date: ' + JSON.stringify(filters.date));
+            filter_by_date( filters.date[0], filters.date[1] );
         }
         if (filters.merchant.length > 0) {
-            _filter_by_merchant(filters.merchant[0]);
+            BankDemo.log('apply_filters: filter by merchant: ' + JSON.stringify(filters.merchant));
+            filter_by_merchant(filters.merchant[0]);
         }
         if (filters.amount.length > 0) {
-            _filter_by_amount(filters.amount[0], filters.amount[1]);
+            BankDemo.log('apply_filters: filter by amount: ' + JSON.stringify(filters.amount));
+            filter_by_amount(filters.amount[0], filters.amount[1]);
         }
         if (filters.sort.length > 0) {
-            _sort(filters.sort[0], filters.sort[1]);
+            BankDemo.log('apply_filters: sort: ' + JSON.stringify(filters.sort));
+            sort_by(filters.sort[0], filters.sort[1]);
         }
         return refresh_list();
-    };
-
-    var remove_filter = function(type) {
-        if (filters.removeFilter(type) > 0) {
-            data = null;
-            getData();
-            return apply_filters();
-        }
-        return length();
-    };
-
-
-    // <div><span>Vons</span><span class="cancel">&nbsp;</span></div>
-    var add_filter_cancel_button = function(type, title) {
-        var container = $('#search-terms');
-        var id = 'search-term-' + type;
-        var id_selector = '#' + id;
-        if (container) {
-            if ($(id_selector)) {
-                $(id_selector).click();
-                $(id_selector).remove();
-            }
-            container.slideDown();
-
-            // Button container
-            var button = $('<div/>').appendTo(container);
-            button.attr('id', id);
-
-            // Label for the button
-            var label  = $('<span/>').appendTo(button);
-            label.html(title);
-
-            // Cancel icon
-            var cancel = $('<span class="cancel">&nbsp;</span>').appendTo(button);
-
-            // Add an onClick handler to remove this button an the filter
-            button.on('click',  function() {
-                $(id_selector).remove();
-                if ($('#search-terms').children().length == 0) {
-                    container.slideUp();
-                }
-                remove_filter(type);
-                if (typeof button_callback === 'function') {
-                    button_callback();
-                }
-            });
-            return true;
-        }
-        return false;
-    };
-
-
-    var get = function(idx) {
-        idx = idx || cur_idx;
-        idx = parseFloat(idx);
-        getData();
-        if (idx < 0) { idx = 0; }
-        if (idx >= data.transactions.length) {
-            idx = data.transactions.length - 1;
-        }
-        cur_idx = idx;
-        return data.transactions[idx];
-    };
-
-    var prev = function() {
-        if (cur_idx > 0) {
-            cur_idx = cur_idx - 1;
-        }
-        return getData().transactions[cur_idx];
-    };
-
-    var next = function() {
-        if (cur_idx < getData().transactions.length - 1) {
-            cur_idx = cur_idx + 1;
-        }
-        return getData().transactions[cur_idx];
-    };
-
-    // Display the details of the given transaction
-    var update_transaction_details = function(transaction) {
-        if (transaction.isPayment()) {
-            $.mobile.changePage('#payment-detail', { changeHash: false } );
-        } else {
-            $.mobile.changePage('#transaction-detail', { changeHash: false } );
-        }
-        AccountData.transactions.displayTransactionHelper(transaction);
-    };
+    }
 
 
     return {
-        init: init,
-        filterByDate: filter_by_date,
-        filterByAmount: filter_by_amount,
-        filterByMerchant: filter_by_merchant,
-        sort: sort,
-        reset: reset,
-        clearFilters: clear_filters,
-        filters: function() { return filters; },
+        /**
+         * @method init - display the transaction list
+         */
+        init: function (callback) {
+            data   = null;
+            cc_num = AccountData.Account.activeCcNumber();
 
-        // Uncomment for debugging
-        //remove_filter: remove_filter,
-        //add_filter_cancel_button: add_filter_cancel_button,
-        getData: getData,
-        //cur_idx: function() { return cur_idx },
-        //date_value_to_timestamp: date_value_to_timestamp,
-
-
-        setFilterButtonCallback: function (callback) {
-            button_callback = callback;
-            return this;
+            AccountData.Transactions.display(cc_num, function(data) {
+                if (typeof callback === 'function') {
+                    callback(data);
+                }
+                get_data();
+            });
         },
 
-        first: function() {
-            return getData().transactions[0];
+
+        /**
+         * @method filterByDate - filter the transaction array by date
+         *
+         * @param value     {Number} a date value in milliseconds
+         * @param direction {String} 'since', 'after',
+         *                           'prior to', 'before' or 'on'
+         */
+        filterByDate: function (value, direction) {
+            filters.addDateFilter(value, direction);
+            data = null;
+            get_data();
         },
 
-        get:  get,
-        prev: prev,
-        next: next,
 
-        last: function() {
-            return getData().transactions[data.transactions.length - 1];
-        },
-
-        showTransaction: function(idx) {
-            update_transaction_details(get(idx));
-        },
-
-        showNextTransaction: function() {
-            update_transaction_details(next());
-        },
-
-        showPrevTransaction: function() {
-            update_transaction_details(prev());
+        /**
+         * @method filterByAmount - filter the transaction array by amount
+         *
+         * @param value     {Number} a numeric value
+         * @param direction {String} 'over', 'greater than',
+         *                           'under', 'less than'
+         *                           'about', 'around' or 'exactly'
+         */
+        filterByAmount: function (value, direction) {
+            filters.addAmountFilter(value, direction);
+            data = null;
+            get_data();
         },
 
         /**
-         * Given a vendor name, return the index for the first transaction
-         * record.
+         * @method filterByMerchant - filter the transaction array by merchant name
          *
-         * @param name  a vendor name
-         * @return idx  the index of the transaction or -1 if not found
+         * @param value {String} a merchant name
+         */
+        filterByMerchant: function (value) {
+            filters.addMerchantFilter(value);
+            data = null;
+            get_data();
+        },
+
+        /**
+         * @method sort - sort by a specified column and direction
+         *
+         * @param value     {String} one of 'amount', 'date', or 'merchant'
+         * @param direction {String} 'asc' or 'desc'
+         */
+        sort: function (column, direction) {
+            filters.addSortFilter(column, direction);
+            data = null;
+            get_data();
+        },
+
+        /**
+         * @method removeFilter - remove a filter of a specified type
+         *
+         * @param type {Sting} one of 'amoun', 'date', 'merchant', or 'sort'
+         */
+        removeFilter: function (type) {
+            if (filters.removeFilter(type) > 0) {
+                data = null;
+                get_data();
+            }
+        },
+
+        /**
+         * @method clearFilters - remove all transaction filters
+         */
+        clearFilters: function () {
+            if (filters.clearFilters() > 0) {
+                data = null;
+                get_data();
+            }
+        },
+
+        /**
+         * @method filter - return the TransactionFilter object
+         */
+        filters: function() {
+            return filters;
+        },
+
+        /**
+         * @method getData - return the transaction data
+         */
+        getData: get_data,
+
+        /**
+         * @method setFilterButtonCallback - set a callback for each
+         * filter "cancel" button.
+         */
+
+        /**
+         * @method currentIndex - return the internal index state
+         * used by next() and prev().
+         *
+         * @return {Number} the internal index
+         */
+        currentIndex: function() {
+            return cur_idx;
+        },
+
+        /**
+         * @method get - return the transaction at the given index within
+         * the transaction array.
+         *
+         * @param idx {Number} - an index within the transaction array
+         * @return {Transaction}
+         */
+        get:  function(idx) {
+            idx = idx || cur_idx;
+            idx = parseFloat(idx);
+            get_data();
+            if (idx < 0) { idx = 0; }
+            if (idx >= data.transactions.length) {
+                idx = data.transactions.length - 1;
+            }
+            cur_idx = idx;
+            return data.transactions[idx];
+        },
+
+        /**
+         * @method prev - return the previous transaction
+         */
+        prev: function() {
+            if (cur_idx > 0) {
+                cur_idx = cur_idx - 1;
+            }
+            return get_data().transactions[cur_idx];
+        },
+
+        /**
+         * @method next - return the next transaction
+         */
+        next: function() {
+            if (cur_idx < get_data().transactions.length - 1) {
+                cur_idx = cur_idx + 1;
+            }
+            return get_data().transactions[cur_idx];
+        },
+
+        /**
+         * @method findFirst - given a vendor name, return the index for
+         * the first transaction record.
+         *
+         * @param name {String} - a vendor name
+         * @return {Number}     - the index of the transaction or -1 if not found
          */
         findFirst: function(name) {
-            getData();
+            get_data();
             var trans_idx = -1;
             for (var i = 0; i < data.transactions.length; i += 1) {
                 if (data.transactions[i].name.toLowerCase() === name.toLowerCase()) {
@@ -630,13 +632,13 @@ var TransactionList = (function($) {
         },
 
         /**
-         * Returns delimited string of merchant names.
+         * @method getMerchants - return a delimited string of merchant names.
          *
-         * @param delim  {String} delimiter
-         * @return {String} delimited string of merchant names
+         * @param delim {String} - delimiter
+         * @return {String}      - delimited string of merchant names
          */
         getMerchants: function(delim) {
-            getData();
+            get_data();
             var merchants = '';
             var merchantHash = new Object();
             for (var i = 0; i < data.transactions.length; i += 1) {

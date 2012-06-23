@@ -88,7 +88,7 @@ Date.prototype.getMonthShort = function () {
  * Relative dates can be 'today', 'tomorrow', 'the day after'
  * or a day of the week (e.g. 'Monday') and the date returned
  * will be in the future (except for 'today').
- * 
+ *
  * @return {String} - a short date
  * @return null - if the relative date is not recognized
  * @see Date.toShortDate
@@ -204,10 +204,36 @@ String.prototype.capitalize = function () {
     return this.charAt(0).toUpperCase() + this.slice(1);
 };
 
+/**
+ * toFloat - return this as a float
+ *
+ * @return {Float} - this value, as a float
+ */
+String.prototype.toFloat = function () {
+    var val = this.replace(/[^\d\.-]/, '');
+    val = parseFloat( val.match(/^-?\d+(\.\d+)?$/)[0] );
+    if (typeof val !== 'number') {
+        throw 'ERROR: "' + this + '" cannot be converted to a float value';
+    }
+    return val;
+};
 
 /**
  * Stringify the given value and test for a finite number value.
+ *
+ * @param value {Object} - candidate value to test
+ * @return {Boolean}
  */
 function isNumber(value) {
     return String(value).isNumber();
+}
+
+/**
+ * Test a value to see if it is an array object.
+ *
+ * @param obj {Object} - candidate object to test
+ * @return {Boolean}
+ */
+function isArray(obj) {
+    return Object.prototype.toString.apply(obj) === '[object Array]';
 }

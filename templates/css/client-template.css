@@ -17,7 +17,7 @@ li.add-payment-account {
     background-image: url(../img/$CLIENT_NAME/RecentTransactions-Filter-Background-$CLIENT_CAMEL_CASE.png);
 }
 .big-btn .ui-btn-text,
-ul#charges-list li div.list-partial,
+ul#transactions-list li div.list-partial,
 div.card-bits span.card-type,
 div.card-bits span.card-choice,
 .detail-type {
