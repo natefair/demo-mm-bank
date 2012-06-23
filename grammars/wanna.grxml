@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<grammar xml:lang="en-US" version="1.0" xmlns="http://www.w3.org/2001/06/grammar" root= "wanna" tag-format="semantics/1.0">
+
+  <rule id="wanna" scope="public">
+    <tag>out = '';</tag>
+    <item repeat="0-1">
+      <one-of>
+        <item>i'd like to <tag>out = "I'd like to";</tag></item>
+        <item>i
+          <one-of>
+            <item>would like to <tag>out = 'i would like to';</tag></item>
+            <item>want to <tag>out = 'i want to';</tag></item>
+            <item>wanna <tag>out = 'i wanna';</tag></item>
+          </one-of>
+        </item>
+      </one-of>
+    </item>
+  </rule>
+
+</grammar>

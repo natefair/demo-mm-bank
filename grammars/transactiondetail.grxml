@@ -1,0 +1,68 @@
+<?xml version= "1.0"?>
+
+<grammar xmlns="http://www.w3.org/2001/06/grammar" version="1.0"
+  xml:lang="en-US" root="rootrule" tag-format="semantics/1.0">
+
+  <rule id="rootrule" scope="public">
+    <one-of>
+      <item><ruleref uri="#dispute"/><tag>out = "dispute";</tag></item>
+      <item><ruleref uri="#next"/><tag>out = "next";</tag></item>
+      <item><ruleref uri="#previous"/><tag>out = "previous";</tag></item>
+      <item><ruleref uri="#back"/><tag>out = "back to list";</tag></item>
+      <item><ruleref uri="#chat"/><tag>out = "chat";</tag></item>
+    </one-of>
+  </rule>
+
+  <rule id="dispute" scope="private">
+    <item>dispute</item>
+    <item repeat="0-1">
+      <one-of>
+        <item>this</item>
+        <item>the</item>
+        <item>my</item>
+      </one-of>
+    </item>
+    <item repeat="0-1"><ruleref uri="#charge"/></item>    
+  </rule>
+
+  <rule id="back" scope="private">
+    <one-of>
+      <item>go back</item>
+      <item>back to list</item>
+    </one-of>
+  </rule>
+
+  <rule id="next" scope="private">
+    <item>next</item>
+    <item repeat="0-1">
+      <one-of>
+        <item>one</item>
+        <item><ruleref uri="#charge"/></item>
+      </one-of>
+    </item>
+  </rule>
+
+  <rule id="previous" scope="private">
+    <item>previous</item>
+    <item repeat="0-1">
+      <one-of>
+        <item>one</item>
+        <item><ruleref uri="#charge"/></item>
+      </one-of>
+    </item>
+  </rule>
+
+  <rule id="charge" scope="private">
+    <one-of>
+      <item>charge</item>
+      <item>transaction</item>
+    </one-of>
+  </rule>
+
+  <rule id="chat" scope="private">
+    <one-of>
+      <item>help</item>
+      <item>agent</item>
+    </one-of>
+  </rule>
+</grammar>

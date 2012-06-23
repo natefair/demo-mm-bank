@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+
+<grammar xml:lang="en-US" version="1.0" xmlns="http://www.w3.org/2001/06/grammar" root= "payment_sources" tag-format="semantics/1.0">
+
+  <!-- Would you like to make a payment? -->
+  <rule id="payment_sources">
+    <tag>out = { action: null };</tag>
+
+    <one-of>
+
+      <!-- Yes [I do] [please] -->
+      <item>
+        yes
+        <item repeat="0-1">
+          i do
+        </item>
+        <item repeat="0-1">
+          please
+        </item>
+        <tag>out.action = 'make payment';</tag>
+      </item>
+
+      <!-- [I want to] make [a] payment [please] -->
+      <!-- [I want to] pay [my] bill [please] -->
+      <!-- [I want to] pay [my] [credit] card [please] -->
+      <item>
+        <ruleref uri="wanna.grxml"/>
+        <one-of>
+          <item>
+            make
+            <item repeat="0-1">
+              a
+            </item>
+            payment
+          </item>
+          <item>
+            pay
+            <item repeat="0-1">
+              my
+            </item>
+            <one-of>
+              <item>
+                bill
+              </item>
+              <item>
+                <item repeat="0-1">
+                  credit
+                </item>
+                card
+              </item>
+            </one-of>
+          </item>
+        </one-of> 
+        <item repeat="0-1">
+          please
+        </item>
+        <tag>out.action = 'make payment';</tag>
+      </item>
+
+      <!-- No [I don't] -->
+      <item>
+        no
+        <item repeat="0-1">
+          i
+          <one-of>
+            <item>
+              don't
+            </item>
+            <item>
+              do not
+            </item>
+          </one-of>
+        </item>
+        <item repeat="0-1">
+          <one-of>
+            <item>
+              thanks
+            </item>
+            <item>
+              thank you
+            </item>
+          </one-of>
+        </item>
+        <tag>out.action = 'no';</tag>
+      </item>
+
+    </one-of>
+  </rule>
+
+</grammar>

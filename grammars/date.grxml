@@ -1,0 +1,825 @@
+<?xml version= "1.0"?>
+
+<grammar mode="voice"
+         root="main"
+         tag-format="semantics/1.0"
+         version="1.0"
+         xml:lang="en-US"
+         xmlns="http://www.w3.org/2001/06/grammar">
+
+  <rule id="main" scope="public">
+   <ruleref uri="#Date"/>
+   <tag>out = rules.latest();</tag>
+  </rule>
+
+  <rule id="Date" scope="public">
+
+    <tag>var result = new Object();
+     result.day = "";
+     result.month = "";
+     result.dow = "";
+     result.special = "";
+     result.year = "";
+    </tag>
+
+    <!-- optional prefiller -->
+    <item repeat="0-1"><item repeat="0-1">on</item>the</item>
+
+    <!-- date -->
+    <one-of>
+      <!-- MonthNum Day ?Year -->
+      <item>
+        <item>
+          <item><ruleref uri="#MonthNum"/></item>
+          <tag>result.month = rules.latest();</tag>
+        </item>
+        <item>
+          <item><ruleref uri="#Day"/></item>
+          <tag>result.day = rules.latest();</tag>
+        </item>
+        <item repeat="0-1">
+          <item><ruleref uri="#Year"/></item>
+          <tag>result.year = rules.latest();</tag>
+        </item>
+        <tag>out =  result.month + "/"
+                    + result.day 
+                    + ( result.year ? "/" + result.year : "" );
+        </tag>
+      </item>
+
+      <!-- Month [Day DayOrd] ?Year -->
+      <item>
+        <item>
+          <item><ruleref uri="#Month"/></item>
+          <tag>result.month = rules.latest();</tag>
+        </item>
+        <one-of>
+          <item>
+            <item><ruleref uri="#Day"/></item>
+            <tag>result.day = rules.latest();</tag>
+          </item>
+          <item>
+            <item><ruleref uri="#DayOrd"/></item>
+            <tag>result.day = rules.latest();</tag>
+          </item>
+        </one-of>
+        <item repeat="0-1">
+          <item><ruleref uri="#Year"/></item>
+          <tag>result.year = rules.latest();</tag>
+        </item>
+        <tag>out =  result.month + "/"
+                    + result.day 
+                    + ( result.year ? "/" + result.year : "" );
+        </tag>
+      </item>
+
+      <!-- DayOrd ?of Month ?Year-->
+      <item>
+        <item>
+          <item><ruleref uri="#DayOrd"/></item>
+          <tag>result.day = rules.latest();</tag>
+        </item>
+        <item repeat-prob="0.98999" repeat="0-1">of</item>
+        <item>
+          <item><ruleref uri="#Month"/></item>
+          <tag>result.month = rules.latest();</tag>
+        </item>
+        <item repeat="0-1">
+          <item><ruleref uri="#Year"/></item>
+          <tag>result.year = rules.latest();</tag>
+        </item>
+        <tag>out =  result.month + "/"
+                    + result.day 
+                    + ( result.year ? "/" + result.year : "" );
+        </tag>
+      </item>
+
+      <!-- [DayOfWeek RelativeDay] MonthNum Day -->
+      <item>
+        <one-of>
+          <item>
+            <item><ruleref uri="#DayOfWeek"/></item>
+            <tag>result.dow = rules.latest();</tag>
+          </item>
+          <item>
+            <item><ruleref uri="#RelativeDay"/></item>
+            <tag>result.special = rules.latest();</tag>
+          </item>
+        </one-of>
+        <item>
+          <item><ruleref uri="#MonthNum"/></item>
+          <tag>result.month = rules.latest();</tag>
+        </item>
+        <item>
+          <item><ruleref uri="#Day"/></item>
+          <tag>result.day = rules.latest();</tag>
+        </item>
+        <tag>out =  ( result.dow ? result.dow + " " : result.special + " " )
+                    + result.month + "/"
+                    + result.day;
+        </tag>
+      </item>
+
+      <!-- [[?DayQualifier DayOfWeek] RelativeDay] Month [Day DayOrd] ?Year --> 
+      <item>
+        <one-of>
+          <item>
+            <item repeat="0-1">
+              <ruleref uri="#DayQualifier"/>
+              <tag>result.special = rules.latest();</tag>
+            </item>
+            <ruleref uri="#DayOfWeek"/>
+            <tag>result.dow = rules.latest();</tag>
+          </item>
+          <item>
+            <ruleref uri="#RelativeDay"/>
+            <tag>result.special = rules.latest();</tag>
+          </item>
+        </one-of>
+        <item repeat="0-1">
+          <ruleref uri="#Month"/>
+          <tag>result.month = rules.latest();</tag>
+        </item>
+        <one-of>
+          <item>
+            <ruleref uri="#Day"/>
+            <tag>result.day = rules.latest();</tag>
+          </item>
+          <item>
+            <ruleref uri="#DayOrd"/>
+            <tag>result.day = rules.latest();</tag>
+          </item>
+        </one-of>
+        <item repeat="0-1">
+          <ruleref uri="#Year"/>
+          <tag>result.year = rules.latest();</tag>
+        </item>
+        <tag>out =  ( result.dow ? ( result.special ? result.special + " " + result.dow : result.dow ) : result.special ) + " "
+                    + result.month + "/"
+                    + result.day
+                    + ( result.year ? "/" + result.year : "" );
+        </tag>
+      </item>
+
+      <!-- Month -->
+      <item weight="5">
+        <item repeat="0-1">
+          <item><ruleref uri="#DayQualifier"/></item>
+          <tag>result.special = rules.latest();</tag>
+        </item>
+        <item><ruleref uri="#Month"/></item>
+        <tag>result.month = rules.latest();</tag>
+        <tag>out = meta.current().text; </tag>
+      </item>
+
+      <!-- DayOfWeek -->
+      <item weight="5">
+        <item repeat="0-1">
+          <item><ruleref uri="#DayQualifier"/></item>
+          <tag>result.special = rules.latest();</tag>
+        </item>
+        <item><ruleref uri="#DayOfWeek"/></item>
+        <tag>result.dow = rules.latest();</tag>
+        <tag>out =  ( result.special ? result.special + " " + result.dow : result.dow ); </tag>
+      </item>
+
+      <!-- RelativeDay -->
+      <item weight="10">
+        <item><ruleref uri="#RelativeDay"/></item>
+        <tag>result.special = rules.latest();</tag>
+        <tag>out =  result.special; </tag>
+      </item>
+    </one-of>
+  </rule>
+
+  <rule id="DayQualifier" scope="private">
+    <one-of>
+      <item>
+        next
+        <tag>out = "next";</tag>
+      </item>
+      <item>
+        this
+        <tag>out = "this";</tag>
+      </item>
+      <item>
+        last
+        <tag>out = "last";</tag>
+      </item>
+    </one-of>
+  </rule>
+
+  <rule id="RelativeDay" scope="private">
+    <one-of>
+       <item>
+        yesterday
+        <tag>out = "yesterday";</tag>
+      </item>
+      <item>
+        tomorrow
+        <tag>out = "tomorrow";</tag>
+      </item>
+      <item>
+        today
+        <tag>out = "today";</tag>
+      </item>
+      <item>
+        tonight
+        <tag>out = "tonight";</tag>
+      </item>
+      <item>
+        this morning
+        <tag>out = "this morning";</tag>
+      </item>
+      <item>
+        last night
+        <tag>out = "last night";</tag>
+      </item>
+      <item>
+        this afternoon
+        <tag>out = "this afternoon";</tag>
+      </item>
+      <item>
+        tomorrow night
+        <tag>out = "tomorrow night";</tag>
+      </item>
+      <item>
+        the day after
+        <tag>out = "the day after";</tag>
+      </item>
+   </one-of>
+  </rule>
+
+  <rule id="DayOfWeek" scope="private">
+    <one-of>
+      <item>
+        Monday  <tag>out="Monday";</tag>
+      </item>
+      <item>
+        Tuesday  <tag>out="Tuesday";</tag>
+      </item>
+      <item>
+        Wednesday  <tag>out="Wednesday";</tag>
+      </item>
+      <item>
+        Thursday <tag>out="Thursday";</tag>
+      </item>
+      <item>
+        Friday <tag>out="Friday";</tag>
+      </item>
+      <item>
+        Saturday <tag>out="Saturday";</tag>
+      </item>
+      <item>
+        Sunday <tag>out="Sunday";</tag>
+      </item>
+    </one-of>
+  </rule>
+
+  <rule id="Month" scope="private">
+    <one-of>
+      <item>
+        January <tag>out="01";</tag>
+      </item>
+      <item>
+        February <tag>out="02";</tag>
+      </item>
+      <item>
+        March <tag>out="03";</tag>
+      </item>
+      <item>
+        April <tag>out="04";</tag>
+      </item>
+      <item>
+        May <tag>out="05";</tag>
+      </item>
+      <item>
+        June <tag>out="06";</tag>
+      </item>
+      <item>
+        July <tag>out="07";</tag>
+      </item>
+      <item>
+        August <tag>out="08";</tag>
+      </item>
+      <item>
+        September <tag>out="09";</tag>
+      </item>
+      <item>
+        October <tag>out="10";</tag>
+      </item>
+      <item>
+        November <tag>out="11";</tag>
+      </item>
+      <item>
+        December <tag>out="12";</tag>
+      </item>
+    </one-of>
+  </rule>
+
+  <rule id="MonthNum" scope="private">
+    <one-of>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> one
+        <tag>out = "01";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> two
+        <tag>out = "02";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> three
+        <tag>out = "03";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> four
+        <tag>out = "04";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> five
+        <tag>out = "05";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> six
+        <tag>out = "06";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> seven
+        <tag>out = "07";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> eight
+        <tag>out = "08";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> nine
+        <tag>out = "09";</tag>
+      </item>
+      <item>
+        ten
+        <tag>out = "10";</tag>
+      </item>
+      <item>
+        eleven
+        <tag>out = "11";</tag>
+      </item>
+      <item>
+        twelve
+        <tag>out = "12";</tag>
+      </item>
+    </one-of>
+  </rule>
+
+  <rule id="Day" scope="private">
+    <one-of>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> one
+        <tag>out = "01";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> two
+        <tag>out = "02";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> three
+        <tag>out = "03";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> four
+        <tag>out = "04";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> five
+        <tag>out = "05";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> six
+        <tag>out = "06";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> seven
+        <tag>out = "07";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> eight
+        <tag>out = "08";</tag>
+      </item>
+      <item>
+        <item repeat-prob="0.01" repeat="0-1">oh</item> nine
+        <tag>out = "09";</tag>
+      </item>
+      <item>
+        ten
+        <tag>out = "10";</tag>
+      </item>
+      <item>
+        eleven
+        <tag>out = "11";</tag>
+      </item>
+      <item>
+        twelve
+        <tag>out = "12";</tag>
+      </item>
+      <item>
+        thirteen
+        <tag>out = "13";</tag>
+      </item>
+      <item>
+        fourteen
+        <tag>out = "14";</tag>
+      </item>
+      <item>
+        fifteen
+        <tag>out = "15";</tag>
+      </item>
+      <item>
+        sixteen
+        <tag>out = "16";</tag>
+      </item>
+      <item>
+        seventeen
+        <tag>out = "17";</tag>
+      </item>
+      <item>
+        eighteen
+        <tag>out = "18";</tag>
+      </item>
+      <item>
+        nineteen
+        <tag>out = "19";</tag>
+      </item>
+      <item>
+        twenty
+        <tag>out = "20";</tag>
+      </item>
+      <item>
+        twenty one
+        <tag>out = "21";</tag>
+      </item>
+      <item>
+        twenty two
+        <tag>out = "22";</tag>
+      </item>
+      <item>
+        twenty three
+        <tag>out = "23";</tag>
+      </item>
+      <item>
+        twenty four
+        <tag>out = "24";</tag>
+      </item>
+      <item>
+        twenty five
+        <tag>out = "25";</tag>
+      </item>
+      <item>
+        twenty six
+        <tag>out = "26";</tag>
+      </item>
+      <item>
+        twenty seven
+        <tag>out = "27";</tag>
+      </item>
+      <item>
+        twenty eight
+        <tag>out = "28";</tag>
+      </item>
+      <item>
+        twenty nine
+        <tag>out = "29";</tag>
+      </item>
+      <item>
+        thirty
+        <tag>out = "30";</tag>
+      </item>
+      <item>
+        thirty one
+        <tag>out = "31";</tag>
+      </item>
+    </one-of>
+  </rule>
+
+  <rule id="DayOrd" scope="private">
+    <item repeat="0-1">the</item>
+    <one-of>
+      <item>
+        first
+        <tag>out = "01";</tag>
+      </item>
+      <item>
+        second
+        <tag>out = "02";</tag>
+      </item>
+      <item>
+        third
+        <tag>out = "03";</tag>
+      </item>
+      <item>
+        fourth
+        <tag>out = "04";</tag>
+      </item>
+      <item>
+        fifth
+        <tag>out = "05";</tag>
+      </item>
+      <item>
+        sixth
+        <tag>out = "06";</tag>
+      </item>
+      <item>
+        seventh
+        <tag>out = "07";</tag>
+      </item>
+      <item>
+        eighth
+        <tag>out = "08";</tag>
+      </item>
+      <item>
+        ninth
+        <tag>out = "09";</tag>
+      </item>
+      <item>
+        tenth
+        <tag>out = "10";</tag>
+      </item>
+      <item>
+        eleventh
+        <tag>out = "11";</tag>
+      </item>
+      <item>
+        twelfth
+        <tag>out = "12";</tag>
+      </item>
+      <item>
+        thirteenth
+        <tag>out = "13";</tag>
+      </item>
+      <item>
+        fourteenth
+        <tag>out = "14";</tag>
+      </item>
+      <item>
+        fifteenth
+        <tag>out = "15";</tag>
+      </item>
+      <item>
+        sixteenth
+        <tag>out = "16";</tag>
+      </item>
+      <item>
+        seventeenth
+        <tag>out = "17";</tag>
+      </item>
+      <item>
+        eighteenth
+        <tag>out = "18";</tag>
+      </item>
+      <item>
+        nineteenth
+        <tag>out = "19";</tag>
+      </item>
+      <item>
+        twentieth
+        <tag>out = "20";</tag>
+      </item>
+      <item>
+        thirtieth
+        <tag>out = "30";</tag>
+      </item>
+      <item>
+        twenty first
+        <tag>out = "21";</tag>
+      </item>
+      <item>
+        twenty second
+        <tag>out = "22";</tag>
+      </item>
+      <item>
+        twenty third
+        <tag>out = "23";</tag>
+      </item>
+      <item>
+        twenty fourth
+        <tag>out = "24";</tag>
+      </item>
+      <item>
+        twenty fifth
+        <tag>out = "25";</tag>
+      </item>
+      <item>
+         twenty sixth
+        <tag>out = "26";</tag>
+      </item>
+      <item>
+        twenty seventh
+        <tag>out = "27";</tag>
+      </item>
+      <item>
+        twenty eighth
+        <tag>out = "28";</tag>
+      </item>
+      <item>
+        twenty ninth
+        <tag>out = "29";</tag>
+      </item>
+      <item>
+        thirty first
+        <tag>out = "31";</tag>
+      </item>
+    </one-of>
+  </rule>
+
+  <rule id="Year" scope="private">
+    <tag>var result = new Object();</tag>
+    <one-of>
+      <!-- 2001 - 2099 -->
+      <item>
+
+        <!-- century : 1900 or 2000 -->
+        <tag>result.century = "20"; out = ""; </tag>
+        <one-of>
+          <item repeat="0-1">
+            <one-of>
+              <item>twenty</item>
+              <item>two<one-of><item>oh</item><item>zero</item></one-of></item>
+              <item>two thousand<item repeat="0-1">and</item>
+              </item>
+            </one-of>
+            <tag>out = "2000"; </tag>
+          </item>
+          <item>
+            nineteen<item repeat="0-1">hundred</item>
+            <tag>result.century = "19"; out = "1900"; </tag>
+          </item>
+        </one-of>
+
+        <item repeat="0-1"><one-of>
+          <!-- 2000-2009 -->
+          <item>
+            <item repeat="0-1">
+              <one-of>
+                <item>zero</item>
+                <item>oh</item>
+              </one-of>
+            </item>
+            <item><ruleref uri="#OneToNine"/></item>
+            <tag>out =  result.century+"0"+rules.latest();</tag>
+          </item>
+
+          <!-- 2011 - 2019 -->
+          <item>
+            <ruleref uri="#Teen"/>
+            <tag>out = result.century+rules.latest();</tag>
+          </item>
+
+          <!-- 2010, 2020, ... -->
+          <item>
+            <ruleref uri="#Decade"/>
+            <tag>out = result.century+rules.latest()+"0";</tag>
+          </item>
+
+          <!-- 2010 - 2099, not 2010, 2020, ... -->
+          <item>
+            <item>
+              <ruleref uri="#Decade"/>
+              <tag>result.decade = rules.latest();</tag>
+            </item>
+            <item>
+              <ruleref uri="#OneToNine"/>
+              <tag>out = result.century+result.decade+rules.latest();</tag>
+            </item>
+          </item>
+        </one-of></item>
+      </item>
+    </one-of>
+  </rule>
+
+  <rule id="Decade" scope="private">
+    <one-of>
+      <item>
+        ten
+        <tag>out = "0";</tag>
+      </item>    
+      <item>
+        twenty
+        <tag>out = "2";</tag>
+      </item>
+      <item>
+        thirty
+        <tag>out = "3";</tag>
+      </item>
+      <item>
+        forty
+        <tag>out = "4";</tag>
+      </item>
+      <item>
+        fifty
+        <tag>out = "5";</tag>
+      </item>
+      <item>
+        sixty
+        <tag>out = "6";</tag>
+      </item>
+      <item>
+        seventy
+        <tag>out = "7";</tag>
+      </item>
+      <item>
+        eighty
+        <tag>out = "8";</tag>
+      </item>
+      <item>
+        ninety
+        <tag>out = "9";</tag>
+      </item>
+    </one-of>
+  </rule>
+
+  <rule id="OneToNine" scope="private">
+    <one-of>
+      <item>
+        one
+        <tag>out = "1";</tag>
+      </item>
+      <item>
+        two
+        <tag>out = "2";</tag>
+      </item>
+      <item>
+        three
+        <tag>out = "3";</tag>
+      </item>
+      <item>
+        four
+        <tag>out = "4";</tag>
+      </item>
+      <item>
+        five
+        <tag>out = "5";</tag>
+      </item>
+      <item>
+        six
+        <tag>out = "6";</tag>
+      </item>
+      <item>
+        seven
+        <tag>out = "7";</tag>
+      </item>
+      <item>
+        eight
+        <tag>out = "8";</tag>
+      </item>
+      <item>
+        nine
+        <tag>out = "9";</tag>
+      </item>
+    </one-of>
+  </rule>
+
+  <rule id="Teen" scope="private">
+    <one-of>
+      <item>
+        ten
+        <tag>out = "10";</tag>
+      </item>
+      <item>
+        eleven
+        <tag>out = "11";</tag>
+      </item>
+      <item>
+        twelve
+        <tag>out = "12";</tag>
+      </item>
+      <item>
+        thirteen
+        <tag>out = "13";</tag>
+      </item>
+      <item>
+        fourteen
+        <tag>out = "14";</tag>
+      </item>
+      <item>
+        fifteen
+        <tag>out = "15";</tag>
+      </item>
+      <item>
+        sixteen
+        <tag>out = "16";</tag>
+      </item>
+      <item>
+        seventeen
+        <tag>out = "17";</tag>
+      </item>
+      <item>
+        eighteen
+        <tag>out = "18";</tag>
+      </item>
+      <item>
+        nineteen
+        <tag>out = "19";</tag>
+      </item>
+    </one-of>
+  </rule>
+
+
+</grammar>

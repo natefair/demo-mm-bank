@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+
+<grammar xml:lang="en-US" version="1.0" xmlns="http://www.w3.org/2001/06/grammar" root= "payment_src" tag-format="semantics/1.0">
+
+  <rule id="payment_src">
+    <one-of>
+      <!-- wells ?fargo ?[checking ?account] -->
+      <item>
+        wells
+        <item repeat="0-1">
+          fargo
+        </item>
+        <item repeat="0-1">
+          checking 
+          <item repeat="0-1">
+            account
+          </item>
+        </item>
+        <tag>out = "9999928541";</tag>
+      </item>
+
+      <!-- bank of america|B of A ?[savings ?account] -->
+      <item>
+        <one-of>
+          <item>
+            bank of america
+          </item>
+          <item>
+            B of A
+            <item repeat="0-1">
+              savings 
+              <item repeat="0-1">
+                account
+              </item>
+            </item>
+          </item>
+        </one-of>
+        <tag>out = "9999928740";</tag>
+      </item>
+
+      <!-- chase ?[checking ?account] -->
+      <item>
+        <item repeat="0-1">
+          J P morgan
+        </item>
+        chase
+        <item repeat="0-1">
+          checking
+          <item repeat="0-1">
+            account
+          </item>
+        </item>
+        <tag>out = "9993452331";</tag>
+      </item>
+
+      <!-- add ?new account -->
+      <item>
+        <item repeat="0-1">
+          and
+        </item>
+        add
+        <item repeat="0-1">
+          <one-of>
+            <item>
+              <item repeat="0-1">
+                a
+              </item>
+              new
+            </item>
+            <item>
+              an
+            </item>
+          </one-of>
+        </item>
+        account
+        <tag>out = 'add account';</tag>
+      </item>
+
+      <item>
+        submit
+        <tag>out = 'submit';</tag>
+      </item>
+    </one-of>
+  </rule>
+</grammar>

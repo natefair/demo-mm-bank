@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+
+<!--
+****************************************************************
+** Copyright (c) Microsoft Corporation.  All rights reserved. **
+****************************************************************
+-->
+
+<grammar xml:lang="en-US" version="1.0" xmlns="http://www.w3.org/2001/06/grammar" root= "ROOT" tag-format="semantics/1.0">
+
+  <rule id="ROOT">
+    <one-of>
+      <item> 1 <tag> out = '1'; </tag> </item>
+      <item> 2 <tag> out = '2'; </tag> </item>
+      <item> 3 <tag> out = '3'; </tag> </item>
+      <item> 4 <tag> out = '4'; </tag> </item>
+      <item> 5 <tag> out = '5'; </tag> </item>
+      <item> 6 <tag> out = '6'; </tag> </item>
+      <item> 7 <tag> out = '7'; </tag> </item>
+      <item> 8 <tag> out = '8'; </tag> </item>
+      <item> 9 <tag> out = '9'; </tag> </item>
+      <item> 0 <tag> out = '0'; </tag> </item>
+
+
+      <item> uno <tag> out = '1'; </tag> </item>
+      <item> dos <tag> out = '2'; </tag> </item>
+      <item> tres <tag> out = '3'; </tag> </item>
+      <item> cuatro <tag> out = '4'; </tag> </item>
+      <item> cinco <tag> out = '5'; </tag> </item>
+      <item> seis <tag> out = '6'; </tag> </item>
+      <item> siete <tag> out = '7'; </tag> </item>
+      <item> ocho <tag> out = '8'; </tag> </item>
+      <item> nueve <tag> out = '9'; </tag> </item>
+      <item> cero <tag> out = '0'; </tag> </item>
+    </one-of>
+  </rule>
+</grammar>

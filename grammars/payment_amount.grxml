@@ -1,0 +1,78 @@
+<?xml version= "1.0"?>
+
+<grammar mode="voice"
+         root="gsl_top"
+         tag-format="semantics/1.0"
+         version="1.0"
+         xml:lang="en-US"
+         xmlns="http://www.w3.org/2001/06/grammar">
+ <rule id="gsl_top" scope="public">
+  <one-of>
+
+   <item weight="0.25581">
+    current
+    <item repeat="0-1" repeat-prob="0.99">
+     <one-of>
+      <item weight="0.90909">
+       balance
+      </item>
+      <item weight="0.090909">
+       amount
+      </item>
+      <item weight="0.090909">
+       payment
+      </item>
+     </one-of>
+    </item>
+    <tag>out = "current_balance";</tag>
+   </item>
+
+   <item weight="0.25581">
+    statement
+    <item repeat="0-1" repeat-prob="0.99">
+      <one-of>
+	<item weight="0.90909">
+	  balance
+	</item>
+	<item weight="0.090909">
+	  amount
+	</item>
+      </one-of>
+    </item>
+    <tag>out = "statement_balance";</tag>
+   </item>
+
+   <item weight="0.25581">
+    minimum
+    <item repeat="0-1" repeat-prob="0.01">minimum</item>
+    <item repeat="0-1" repeat-prob="0.9">
+      <one-of>
+	<item weight="0.90909">
+	  due
+	</item>
+	<item weight="0.090909">
+	  amount
+	</item>
+	<item weight="0.090909">
+	  payment
+	</item>
+      </one-of>
+    </item>
+    <tag>out = "minimum_due";</tag>
+   </item>
+
+   <item weight="0.23255">
+    <ruleref uri="natural_numbers_thru_999_nozero.grxml"/>
+    dollars
+    <tag>out = rules.latest();</tag>
+    <item repeat="0-1" repeat-prob="0.01" weight="0.25">
+      <ruleref uri="natural_numbers_thru_99_nozero.grxml"/>
+      cents
+    <tag>out += '.' + rules.latest();</tag>
+    </item>
+   </item>
+
+  </one-of>
+ </rule>
+
+</grammar>

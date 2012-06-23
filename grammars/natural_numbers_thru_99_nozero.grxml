@@ -1,0 +1,146 @@
+<?xml version= "1.0"?>
+
+
+<grammar mode="voice"
+         root="NATURALNUMBERS_1_THRU_99"
+         tag-format="semantics/1.0"
+         version="1.0"
+         xml:lang="en-US"
+         xmlns="http://www.w3.org/2001/06/grammar">
+
+  <rule id="NATURALNUMBERS_1_THRU_99" scope="public">
+    <one-of>
+      <!-- 1 thru 9 -->
+      <item weight="0.1">
+        <ruleref uri="natural_numbers_thru_9_nozero.grxml#NATURALNUMBERS_1_THRU_9"/>
+        <tag> out = rules.latest(); </tag>
+      </item>
+      <!-- 10 thru 99 -->
+      <item weight="0.9">
+        <ruleref uri="#NATURALNUMBERS_10_THRU_99"/>
+        <tag> out = rules.latest(); </tag>
+      </item>
+    </one-of>
+  </rule>
+
+  <rule id="NATURALNUMBERS_10_THRU_99" scope="public">
+    <one-of>
+      <!-- 10 -->
+      <item>
+        ten
+        <tag>out = 10;</tag>
+      </item>
+      <!-- decade -->
+      <item>
+        <ruleref uri="#SUB_DECADE"/>
+        <tag>out = rules.latest();</tag>
+      </item>
+      <!-- 11 thru 99 no trailing zero -->
+      <item>
+        <ruleref uri="#NATURALNUMBERS_11_THRU_99"/>
+        <tag> out = rules.latest() </tag>
+      </item>
+    </one-of>
+  </rule>
+ 
+  <rule id="SUB_DECADE" scope="private">
+    <one-of>
+      <item> twenty <tag> out = 20 </tag> </item>
+      <item> thirty <tag> out = 30 </tag> </item>
+      <item> forty <tag> out = 40 </tag> </item>
+      <item> fifty <tag> out = 50 </tag> </item>
+      <item> sixty <tag> out = 60 </tag> </item>
+      <item> seventy <tag> out = 70 </tag> </item>
+      <item> eighty <tag> out = 80 </tag> </item>
+      <item> ninety <tag> out = 90 </tag> </item>
+    </one-of>
+  </rule>
+
+  <rule id="NATURALNUMBERS_11_THRU_99" scope="public">
+    <one-of>
+      <item> eleven <tag>out = 11;</tag> </item>
+      <item> twelve <tag>out = 12;</tag> </item>
+      <item> thirteen <tag>out = 13;</tag> </item>
+      <item> fourteen <tag>out = 14;</tag> </item>
+      <item> fifteen <tag>out = 15;</tag> </item>
+      <item> sixteen <tag>out = 16;</tag> </item>
+      <item> seventeen <tag>out = 17;</tag> </item>
+      <item> eighteen <tag>out = 18;</tag> </item>
+      <item> nineteen <tag>out = 19;</tag> </item>
+      <item> twenty one <tag>out = 21;</tag> </item>
+      <item> twenty two <tag>out = 22;</tag> </item>
+      <item> twenty three <tag>out = 23;</tag> </item>
+      <item> twenty four <tag>out = 24;</tag> </item>
+      <item> twenty five <tag>out = 25;</tag> </item>
+      <item> twenty six <tag>out = 26;</tag> </item>
+      <item> twenty seven <tag>out = 27;</tag> </item>
+      <item> twenty eight <tag>out = 28;</tag> </item>
+      <item> twenty nine <tag>out = 29;</tag> </item>
+      <item> thirty one <tag>out = 31;</tag> </item>
+      <item> thirty two <tag>out = 32;</tag> </item>
+      <item> thirty three <tag>out = 33;</tag> </item>
+      <item> thirty four <tag>out = 34;</tag> </item>
+      <item> thirty five <tag>out = 35;</tag> </item>
+      <item> thirty six <tag>out = 36;</tag> </item>
+      <item> thirty seven <tag>out = 37;</tag> </item>
+      <item> thirty eight <tag>out = 38;</tag> </item>
+      <item> thirty nine <tag>out = 39;</tag> </item>
+      <item> forty one <tag>out = 41;</tag> </item>
+      <item> forty two <tag>out = 42;</tag> </item>
+      <item> forty three <tag>out = 43;</tag> </item>
+      <item> forty four <tag>out = 44;</tag> </item>
+      <item> forty five <tag>out = 45;</tag> </item>
+      <item> forty six <tag>out = 46;</tag> </item>
+      <item> forty seven <tag>out = 47;</tag> </item>
+      <item> forty eight <tag>out = 48;</tag> </item>
+      <item> forty nine <tag>out = 49;</tag> </item>
+      <item> fifty one <tag>out = 51;</tag> </item>
+      <item> fifty two <tag>out = 52;</tag> </item>
+      <item> fifty three <tag>out = 53;</tag> </item>
+      <item> fifty four <tag>out = 54;</tag> </item>
+      <item> fifty five <tag>out = 55;</tag> </item>
+      <item> fifty six <tag>out = 56;</tag> </item>
+      <item> fifty seven <tag>out = 57;</tag> </item>
+      <item> fifty eight <tag>out = 58;</tag> </item>
+      <item> fifty nine <tag>out = 59;</tag> </item>
+      <item> sixty one <tag>out = 61;</tag> </item>
+      <item> sixty two <tag>out = 62;</tag> </item>
+      <item> sixty three <tag>out = 63;</tag> </item>
+      <item> sixty four <tag>out = 64;</tag> </item>
+      <item> sixty five <tag>out = 65;</tag> </item>
+      <item> sixty six <tag>out = 66;</tag> </item>
+      <item> sixty seven <tag>out = 67;</tag> </item>
+      <item> sixty eight <tag>out = 68;</tag> </item>
+      <item> sixty nine <tag>out = 69;</tag> </item>
+      <item> seventy one <tag>out = 71;</tag> </item>
+      <item> seventy two <tag>out = 72;</tag> </item>
+      <item> seventy three <tag>out = 73;</tag> </item>
+      <item> seventy four <tag>out = 74;</tag> </item>
+      <item> seventy five <tag>out = 75;</tag> </item>
+      <item> seventy six <tag>out = 76;</tag> </item>
+      <item> seventy seven <tag>out = 77;</tag> </item>
+      <item> seventy eight <tag>out = 78;</tag> </item>
+      <item> seventy nine <tag>out = 79;</tag> </item>
+      <item> eighty one <tag>out = 81;</tag> </item>
+      <item> eighty two <tag>out = 82;</tag> </item>
+      <item> eighty three <tag>out = 83;</tag> </item>
+      <item> eighty four <tag>out = 84;</tag> </item>
+      <item> eighty five <tag>out = 85;</tag> </item>
+      <item> eighty six <tag>out = 86;</tag> </item>
+      <item> eighty seven <tag>out = 87;</tag> </item>
+      <item> eighty eight <tag>out = 88;</tag> </item>
+      <item> eighty nine <tag>out = 89;</tag> </item>
+      <item> ninety one <tag>out = 91;</tag> </item>
+      <item> ninety two <tag>out = 92;</tag> </item>
+      <item> ninety three <tag>out = 93;</tag> </item>
+      <item> ninety four <tag>out = 94;</tag> </item>
+      <item> ninety five <tag>out = 95;</tag> </item>
+      <item> ninety six <tag>out = 96;</tag> </item>
+      <item> ninety seven <tag>out = 97;</tag> </item>
+      <item> ninety eight <tag>out = 98;</tag> </item>
+      <item> ninety nine <tag>out = 99;</tag> </item>
+    </one-of>
+  </rule>
+
+</grammar>
+

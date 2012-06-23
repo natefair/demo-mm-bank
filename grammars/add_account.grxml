@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+
+<!--
+****************************************************************
+** Copyright (c) Microsoft Corporation.  All rights reserved. **
+****************************************************************
+-->
+
+<grammar xml:lang="en-US" version="1.0" xmlns="http://www.w3.org/2001/06/grammar" root= "ROOT" tag-format="semantics/1.0">
+
+<rule id="ROOT">
+  <tag>
+    out.SLOTS = {
+      action:      '',
+      acctnumber:  '',
+      routenumber: ''
+    }; 
+  </tag>
+
+  <one-of>
+    <item repeat="1-2"> 
+      <one-of> 
+        <item>
+          <item repeat="0-1">and</item>
+          <item repeat="0-1">my</item>
+          account number is
+          <tag>out.SLOTS.action = "add";</tag> 
+          <item repeat="10">
+            <ruleref uri="digit.grxml" />
+            <tag>out.SLOTS.acctnumber += rules.latest();</tag>
+          </item>
+        </item>
+
+        <item>
+          <item repeat="0-1">and</item>
+          <item repeat="0-1">my</item>
+          routing number is
+          <tag>out.SLOTS.action = "add";</tag> 
+          <item repeat="9">
+            <ruleref uri="digit.grxml" />
+            <tag>out.SLOTS.routenumber += rules.latest();</tag>
+          </item>
+        </item> 
+      </one-of>
+    </item>
+    
+    <item>
+      <one-of>
+        <item>
+          submit
+        </item>
+        <item>
+          add account 
+        </item>
+      </one-of>
+      <tag>out.SLOTS.action = "submit";</tag>
+    </item>
+
+    <item>
+      <one-of>
+        <item>help</item>
+        <item><item repeat="0-1">speak with an</item> agent</item>
+      </one-of>
+      <tag>out.SLOTS.action = "help";</tag>
+    </item>
+
+    <item>
+      <item repeat="0-1">go</item> back
+      <tag>out.SLOTS.action = "back";</tag>
+    </item>
+
+  </one-of>
+</rule>
+</grammar>

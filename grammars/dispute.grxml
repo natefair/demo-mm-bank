@@ -1,0 +1,28 @@
+<?xml version= "1.0"?>
+
+<grammar xmlns="http://www.w3.org/2001/06/grammar" version="1.0"
+  xml:lang="en-US" root="rootrule" tag-format="semantics/1.0">
+
+  <rule id="rootrule" scope="public">
+    <one-of>
+      <item>back to list</item>
+      <item><ruleref uri="#mainmenu"/><tag>out = "main menu"</tag></item>
+      <item>continue</item>
+      <item><ruleref uri="#chat"/><tag>out = "chat"</tag></item>
+    </one-of>
+  </rule>
+
+  <rule id="mainmenu" scope="private">
+    <one-of>
+      <item>main menu</item>
+      <item>start over</item>
+    </one-of>
+  </rule>
+
+  <rule id="chat" scope="private">
+    <one-of>
+      <item>help</item>
+      <item>agent</item>
+    </one-of>
+  </rule>
+</grammar>
