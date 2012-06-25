@@ -2,10 +2,10 @@
     background: $BACKGROUND_COLOR url(../img/$CLIENT_NAME/bg.png) $BACKGROUND_REPEAT !important;
 }
 .logo {
-    background: url(../img/$CLIENT_NAME/logo.png) no-repeat;
+    background: $BACKGROUND_COLOR url(../img/$CLIENT_NAME/logo.png) no-repeat;
 }
 .logo-chat {
-    background: url(../img/$CLIENT_NAME/logo-chat.png) no-repeat;
+    background: $BACKGROUND_COLOR url(../img/$CLIENT_NAME/logo-chat.png) no-repeat;
 }
 .back-button {
     background: url(../img/$CLIENT_NAME/back.png) no-repeat;
