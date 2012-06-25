@@ -2,14 +2,15 @@ demo-mm-bank
 ============
 
 [24]7 Bank Demo
-===============
+---------------
 
 A demo app evolved to encompass 2 or more individual journeys.
 
 The code has been unified from the Recent Transactions and Payments demos with the goals of making it easier to expand the demo, making page controllers more consistent, and having a consistent coding style.
 
-Adding a newly demo
--------------------
+
+Adding a New Brand to the Demo
+==============================
 
 First: add 1 make targets to the Makefile in the root of the repository:
 
@@ -24,7 +25,7 @@ First: add 1 make targets to the Makefile in the root of the repository:
             LAST_NUM_CARD_DIGITS=... \
             LAST_CARD_DIGITS_PREFIX='...'
 
-Then, add <clientname> as a target for the "all:" target in order for it to be built when calling:
+Then, add &lt;clientname&gt; as a target for the "all:" target in order for it to be built when calling:
 
     make rebuild
 
@@ -32,7 +33,7 @@ Second: create an image directory:
 
     mkdir img/<clientname>
 
-Third: add custom images to the img/<clientname> directory:
+Third: add custom images to the img/&lt;clientname&gt; directory:
 
     Payments-CalendarWidget-<ClientName>.png
     Payments-Chat-AgentTextBubbleFilled-<ClientName>.png
@@ -58,6 +59,9 @@ Third: add custom images to the img/<clientname> directory:
     menu6.png
     paynow.png
     recent.png
+
+Once you have run ```make rebuild```, you will find a new index-&lt;clientname&gt;.html file in the build/ directory.
+
 
 Development Workflow
 --------------------
