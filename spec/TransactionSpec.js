@@ -80,9 +80,49 @@ describe('js/transactions.js', function () {
   });
 
   describe('TransactionFilter', function () {
-  });
+    var filter;
 
-  describe('TransactionList', function () {
+    beforeEach(function () {
+      filter = TransactionFilter;
+    });
+
+    describe('addAmountFilter', function () {
+      it('adds an amount filter and amount filter is correct', function () {
+        filter.addAmountFilter('10.00', 'over');
+        expect(filter.amount).toEqual(['10.00', 'over']);
+      });
+    });
+    describe('addDateFilter', function () {
+      it('adds a date filter and date filter is correct', function () {
+        var now = Date.now();
+        filter.addDateFilter(now, 'after');
+        expect(filter.date).toEqual([now, 'after']);
+      });
+    });
+    describe('addMerchantFilter', function () {
+      it('adds a merchant filter and merchant filter is correct', function () {
+        filter.addMerchantFilter('merchant');
+        expect(filter.merchant).toEqual(['merchant']);
+      });
+    });
+    describe('addSortFilter', function () {
+      it('adds a sort filter and sort filter is correct', function () {
+        filter.addSortFilter('merchant', 'desc');
+        expect(filter.sort).toEqual(['merchant', 'desc']);
+      });
+    });
+    describe('updateFilter', function () {
+      it('updates filters correctly', function () {
+        filter.updateFilter('sort', ['amount', 'asc']);
+        expect(filter.sort).toEqual(['amount', 'asc']);
+      });
+    });
+    describe('removeFilter', function () {
+      it('removes filters correctly', function () {
+        filter.removeFilter('sort');
+        expect(filter.sort).toEqual([]);
+      });
+    });
   });
 
 });
