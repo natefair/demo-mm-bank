@@ -66,6 +66,10 @@ describe('js/extensions.js', function () {
       var today = new Date();
       expect(Date.parseRelative('the day after')).toEqual(today.addDays(2).toShortDate());
     });
+    it('returns "Jul 1, <year>" for "07/01"', function () {
+      var today = (new Date()).getFullYear();
+      expect(Date.parseRelative('07/01')).toEqual('Jul 1, ' + today);
+    });
   });
 
   // String.isNumber extension

@@ -115,6 +115,12 @@ Date.parseRelative = function (date) {
         now_msec += (24 * 60 * 60 * 2) * 1000;
         new_date = new Date(now_msec);
 
+    // 07/01
+    } else if (date.match(/^\d\d\/\d\d$/)) {
+        new_date = date + '/' + (new Date()).getFullYear();
+        new_date = new Date(Date.parse(new_date));
+        return new_date.toShortDate();
+
     } else {
 
         // Monday, Tuesday, etc.

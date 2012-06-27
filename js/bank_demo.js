@@ -140,10 +140,11 @@ var BankDemo = (function ($) {
          */
         prompt: function (page) {
             if (typeof BankDemo.Prompts[page] !== 'undefined') {
+                BankDemo.log('[prompt] request for "' + page + '"');
                 NativeBridge.playAudio('audio/' + BankDemo.Prompts[page]);
                 return true;
             }
-            BankDemo.log('[prompt] cannot find WAV for "' + screen + '"');
+            BankDemo.log('[prompt] cannot find WAV for "' + page + '"');
             return false;
         }
     }
@@ -327,8 +328,10 @@ BankDemo.Controller.prototype = (function ($) {
          * @param page {String} - The page ID to change to, e.g. '#main'
          */
         changePage: function (page) {
-            NativeBridge.cancelAudio();
+            BankDemo.log('cancelling audio');
+            //NativeBridge.cancelAudio();
             this.clearRecoErrors();
+            BankDemo.log('changing page to ' + page);
             $.mobile.changePage($(page), {transition: 'none'});
         },
 
@@ -347,13 +350,13 @@ BankDemo.Controller.prototype = (function ($) {
         },
 
         setGrammar: function (message, grammar, handler) {
-	    this.log('Setting grammar to: ' + grammar);
+            this.log('Setting grammar to: ' + grammar);
             NativeBridge.setMessage(message);
             NativeBridge.setGrammar(grammar, null, handler);
         },
 
         beforeHide: function () {
-            //NativeBridge.cancelAudio();
+            NativeBridge.setMessage(null);
             return false;
         },
 
@@ -513,7 +516,7 @@ jQuery.extend(BankDemo.MainMenuController, (function ($) {
     };
 
     grammar_handler = function (result) {
-        var interp, filed, value, comparison, label;
+        var interp, filed, value, comparison;
 
         self.log('reco result: ' + JSON.stringify(result));
 
@@ -536,20 +539,18 @@ jQuery.extend(BankDemo.MainMenuController, (function ($) {
                 switch (field) {
                 case 'amount':
                     TransactionList.filterByAmount(value, comparison);
-                    label = [comparison.capitalize(), value].join(' ');
-                    BankDemo.RecentTransactionsController.addFilterButton('amount', label);
+                    BankDemo.RecentTransactionsController.addAmountFilterButton(value, comparison);
                     break;
 
                 case 'date':
                     value = parseFloat(value);
                     TransactionList.filterByDate(value, comparison);
-                    label = date_filter_label(value, comparison);
-                    BankDemo.RecentTransactionsController.addFilterButton('date', label);
+                    BankDemo.RecentTransactionsController.addDateFilterButton(value, comparison);
                     break;
 
                 case 'merchant':
                     TransactionList.filterByMerchant(value);
-                    BankDemo.RecentTransactionsController.addFilterButton('merchant', value);
+                    BankDemo.RecentTransactionsController.addMerchantFilterButton(value);
                     break;
                 }
 
@@ -586,10 +587,10 @@ jQuery.extend(BankDemo.MainMenuController, (function ($) {
 
     return {
         beforeShow: function () {
-            BankDemo.RecentTransactionsController.removeFilterButtons();
         },
 
         onShow: function () {
+            BankDemo.RecentTransactionsController.removeFilterButtons();
             self.initDropdown('last-4-digits-main', false);
             set_grammar('How may I help you?');
             if (! self.prompted()) {
@@ -650,6 +651,7 @@ jQuery.extend(BankDemo.RecentTransactionsController, (function ($) {
                 button.remove();
             }
             container.slideDown();
+            $('#hide-me').css('opacity', 0);
 
             // Button container
             button = $('<div>').attr('id', button_id).appendTo(container);
@@ -665,6 +667,7 @@ jQuery.extend(BankDemo.RecentTransactionsController, (function ($) {
                 $('#' + button_id).remove();
                 if ($('#search-terms').children().length === 0) {
                     container.slideUp();
+                    $('#hide-me').css('opacity', 100);
                 }
                 TransactionList.removeFilter(type);
                 set_grammar(null);
@@ -704,9 +707,25 @@ jQuery.extend(BankDemo.RecentTransactionsController, (function ($) {
        $('#search-terms').slideUp();
     }
 
+    function add_sort_filter_button(column) {
+        add_filter_button('sort', 'Sort ' + column);
+    }
+
+    function add_amount_filter_button(value, comparison) {
+        add_filter_button('amount', [comparison.capitalize(), value].join(' '));
+    }
+
+    function add_date_filter_button(value, comparison) {
+        add_filter_button('date', date_filter_label(value, comparison));
+    }
+
+    function add_merchant_filter_button(merchant) {
+        add_filter_button('merchant', merchant);
+    }
+
     grammar_handler = function (result) {
         var interp, action, column, direction,
-            field, value, comparison, label, transaction;
+            field, value, comparison, transaction;
 
         self.log('reco result: ' + JSON.stringify(result));
 
@@ -723,7 +742,7 @@ jQuery.extend(BankDemo.RecentTransactionsController, (function ($) {
                 direction = interp.order.toLowerCase();
 
                 TransactionList.sort(column, direction);
-                add_filter_button('sort', 'Sort ' + column);
+                add_sort_filter_button(column);
 
                 self.clearRecoErrors();
                 set_grammar(null)
@@ -737,20 +756,18 @@ jQuery.extend(BankDemo.RecentTransactionsController, (function ($) {
                 switch (field) {
                 case 'amount':
                     TransactionList.filterByAmount(value, comparison);
-                    label = [comparison.capitalize(), value].join(' ');
-                    add_filter_button('amount', label);
+                    add_amount_filter_button(value, comparison);
                     break;
 
                 case 'date':
                     value = parseFloat(value);
                     TransactionList.filterByDate(value, comparison);
-                    label = date_filter_label(value, comparison);
-                    add_filter_button('date', label);
+                    add_date_filter_button(value, comparison);
                     break;
 
                 case 'merchant':
                     TransactionList.filterByMerchant(value);
-                    add_filter_button('merchant', value);
+                    add_merchant_filter_button(value);
                     break;
                 }
 
@@ -853,20 +870,24 @@ jQuery.extend(BankDemo.RecentTransactionsController, (function ($) {
 
     return {
         beforeShow: function () {
-            AccountData.Transactions.setOnLoadCallback( set_grammar );
-            self.initDropdown('last-4-digits-recent-transactions', false);
         },
 
         onShow: function () {
             self.clearRecoErrors();
+            set_grammar(null);
+            self.initDropdown('last-4-digits-recent-transactions', false);
+            $('#transactions-list').listview('refresh');
             if (! self.prompted()) {
                 BankDemo.prompt('rt-01');
                 self.setPrompted(true);
             }
-            $('#transactions-list').listview('refresh');
         },
 
         addFilterButton: add_filter_button,
+        addSortFilterButton: add_sort_filter_button,
+        addAmountFilterButton: add_amount_filter_button,
+        addDateFilterButton: add_date_filter_button,
+        addMerchantFilterButton: add_merchant_filter_button,
         removeFilterButtons: remove_filter_buttons,
 
         init: function () {
@@ -1046,7 +1067,6 @@ jQuery.extend(BankDemo.TransactionDetailController, (function ($) {
     return {
         beforeShow: function () {
             self.clearRecoErrors();
-            NativeBridge.setMessage(null);
             detail_init('last-4-digits-detail');
         },
 
@@ -1057,8 +1077,8 @@ jQuery.extend(BankDemo.TransactionDetailController, (function ($) {
         onShow: function () {
             set_grammar(null);
             if (! self.prompted()) {
-                self.setPrompted(true);
                 BankDemo.prompt('rt-detail-01');
+                self.setPrompted(true);
             }
         },
 
@@ -1148,10 +1168,10 @@ jQuery.extend(BankDemo.TransactionDisputeController, (function ($) {
 
     return {
         beforeShow: function () {
-            self.initDropdown('last-4-digits-dispute', true);
         },
 
         onShow: function () {
+            self.initDropdown('last-4-digits-dispute', true);
             set_grammar(null);
             self.clearRecoErrors();
         },
@@ -1228,7 +1248,8 @@ jQuery.extend(BankDemo.PaymentController, (function ($) {
             date_rel   = Date.parseRelative(date),
             date_val   = null;
 
-        if (! isNaN(date_msecs)) {
+        self.log('date: "' + date + '" date_msecs: "' + date_msecs + '" date_rel: "' + date_rel + '"');
+        if (isNumber(date_msecs)) {
             date_val = (new Date(date_msecs)).toShortDate();
         } else if (date_rel !== null) {
             date_val = date_rel;
@@ -1369,6 +1390,10 @@ jQuery.extend(BankDemo.PaymentController, (function ($) {
                 }
                 set_grammar(message);
                 break;
+
+            default:
+                set_grammar("I'm sorry, I didn't get that.");
+                break;
             }
         }
     }
@@ -1407,13 +1432,13 @@ jQuery.extend(BankDemo.PaymentController, (function ($) {
         populateSrcAcctInfo: populate_src_acct_info,
 
         beforeShow: function () {
-            self.initDropdown('last-4-digits-payment', false);
         },
 
         onShow: function () {
+            self.initDropdown('last-4-digits-payment', false);
             update_estimated_date();
             set_grammar(null);
-            if (! self.prompted) {
+            if (! self.prompted()) {
                 BankDemo.prompt('payment');
                 self.setPrompted(true);
             }
@@ -1499,7 +1524,7 @@ jQuery.extend(BankDemo.PaymentAccountFromController, (function ($) {
             default:
                 // set the new active source account
                 // and then refresh the list
-                AccountData.Account.set_active_src_number(interpretation);
+                AccountData.Account.setActiveSrcNumber(interpretation);
                 self.changePage('#payment');
                 break;
             }
@@ -1559,10 +1584,10 @@ jQuery.extend(BankDemo.PaymentAccountFromController, (function ($) {
 
     return {
         beforeShow: function () {
-            self.initDropdown('last-4-digits-acctfrom', true)
         },
 
         onShow: function () {
+            self.initDropdown('last-4-digits-acctfrom', true)
             set_grammar(null);
             if (! self.prompted()) {
                 BankDemo.prompt('acctfrom');
@@ -1689,10 +1714,10 @@ jQuery.extend(BankDemo.PaymentAccountAddController, (function ($) {
 
     return {
         beforeShow: function () {
-            self.initDropdown('last-4-digits-acctadd', true);
         },
 
         onShow: function () {
+            self.initDropdown('last-4-digits-acctadd', true);
             set_grammar(null);
             if (! self.prompted()) {
                 BankDemo.prompt('acctadd');
@@ -1750,11 +1775,11 @@ jQuery.extend(BankDemo.PaymentConfirmController, (function ($) {
 
     return {
         beforeShow: function () {
-            self.unsetGrammar();
-            self.initDropdown('last-4-digits-confirm', true);
         },
 
         onShow: function () {
+            self.unsetGrammar();
+            self.initDropdown('last-4-digits-confirm', true);
             create_confirmation();
         },
 
@@ -1862,7 +1887,6 @@ jQuery.extend(BankDemo.SurveyController, (function ($) {
 
         onShow: function () {
             reset_rating();
-            $('#survey-feedback').focus();
         },
 
         init: function () {
@@ -1872,6 +1896,9 @@ jQuery.extend(BankDemo.SurveyController, (function ($) {
                 page.on('pageshow',       self.onShow);
                 $('#survey-back-button').on('click', function () {
                     self.changePage(self.back_button_page);
+                });
+                $('#survey-submit-button').on('click', function () {
+                    self.changePage('#main-menu');
                 });
                 initialize_stars()
                 return true;

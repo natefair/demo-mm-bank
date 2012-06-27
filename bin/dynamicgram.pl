@@ -20,6 +20,9 @@ use constant GRXML => << 'End';
 
   <tag>
     var now = new Date();
+    now.setHours(0);
+    now.setMinutes(0);
+    now.setSeconds(0);
     var currDay = now.getDay();
     var currMonth = now.getMonth();
     var currDate = now.getDate();
@@ -86,7 +89,10 @@ use constant GRXML => << 'End';
   %s
 
   <rule id="sinceDate">
-    <item>since <ruleref uri="#dateFlavor"/><tag>out = rules.dateFlavor;</tag></item>
+    <item>
+      since <ruleref uri="#dateFlavor"/>
+      <tag>out = rules.dateFlavor;</tag>
+    </item>
   </rule>
 
   <rule id="moreThanAmount">
@@ -175,17 +181,42 @@ use constant GRXML => << 'End';
 
   <rule id="dateFlavor">
     <one-of>
-      <item><ruleref uri="#dayofweek"/><tag>changeDayOfWeek(rules.dayofweek, false); out = now;</tag></item>
-      <item>last <ruleref uri="#dayofweek"/><tag>changeDayOfWeek(rules.dayofweek, true);  out = now;</tag></item>
-      <item><ruleref uri="#dayFlavor"/><tag>changeDay(rules.dayFlavor);  out = now;</tag></item>
-      <item><ruleref uri="#dayAndMonthFlavor"/><tag>changeMonthAndDay(rules.dayAndMonthFlavor.month, rules.dayAndMonthFlavor.day);  out = now;</tag></item>
+      <item>
+        yesterday
+        <tag>now.setDate(now.getDate() - 1); out = now;</tag>
+      </item>
+      <item>
+        <ruleref uri="#dayofweek"/>
+        <tag>changeDayOfWeek(rules.dayofweek, false); out = now;</tag>
+      </item>
+      <item>
+        last <ruleref uri="#dayofweek"/>
+        <tag>changeDayOfWeek(rules.dayofweek, true);  out = now;</tag>
+      </item>
+      <item>
+        <ruleref uri="#dayFlavor"/>
+        <tag>changeDay(rules.dayFlavor); out = now;</tag>
+      </item>
+      <item>
+        <ruleref uri="#dayAndMonthFlavor"/>
+        <tag>
+          changeMonthAndDay(rules.dayAndMonthFlavor.month, rules.dayAndMonthFlavor.day);
+          out = now;
+        </tag>
+      </item>
     </one-of>
   </rule>
 
   <rule id="dayFlavor">
     <one-of>
-      <item>the <ruleref uri="#day"/><tag>out = rules.day;</tag></item>
-      <item><ruleref uri="#dayofweek"/> the <ruleref uri="#day"/><tag>out = rules.day;</tag></item>
+      <item>
+        the <ruleref uri="#day"/>
+        <tag>out = rules.day;</tag>
+      </item>
+      <item>
+        <ruleref uri="#dayofweek"/> the <ruleref uri="#day"/>
+        <tag>out = rules.day;</tag>
+      </item>
     </one-of>
   </rule>
 

@@ -63,10 +63,11 @@ dev_deploy: all
 	ssh -i $(SSH_KEY) $(USER)@$(HOST) 'mkdir -p $(DEV_PATH) $(DEV_PERL_PATH)'; \
 	rsync -ravz -e "ssh -i $(SSH_KEY) -l $(USER)" build/ $(USER)@$(HOST):$(DEV_PATH); \
 	rsync -ravz -e "ssh -i $(SSH_KEY) -l $(USER)" bin/dynamicgram.pl $(USER)@$(HOST):$(DEV_PERL_PATH)
-	#bin/generate_grammar_files.pl $(DEV_NAME) \
+
+dev_deploy_clean:
+	ssh -i $(SSH_KEY) $(USER)@$(HOST) 'rm -rfv  $(DEV_PATH)/*';
 
 prod_deploy: all
 	ssh -i $(SSH_KEY) $(USER)@$(HOST) 'mkdir -p $(PROD_PATH) $(PROD_PERL_PATH)'; \
 	rsync -ravz -e "ssh -i $(SSH_KEY) -l $(USER)" build/ $(USER)@$(HOST):$(PROD_PATH); \
 	rsync -ravz -e "ssh -i $(SSH_KEY) -l $(USER)" bin/dynamicgram.pl $(USER)@$(HOST):$(PROD_PERL_PATH)
-	#bin/generate_grammar_files.pl $(PROD_NAME) \

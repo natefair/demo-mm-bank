@@ -103,7 +103,7 @@
     </div>
   </div>
   <div id="charge-list" data-role="content">
-   <div class="page-heading">Recent Transactions</div>
+   <div class="page-heading" id="hide-me">Recent Transactions</div>
    <ul id="transactions-list" data-role="listview" data-inset="true"></ul>
   </div>
 </div>
@@ -340,23 +340,28 @@ timely and thorough manner.
 
 <!-- ACCT ADD PAGE -->
 <div id="acct-add" data-role="page">
+  <!-- Header -->
   <div data-role="header" data-position="fixed" data-theme="b">
+    <!-- Navigation buttons -->
     <div class="logo">
       <img id="acct-add-back-button" class="header-button left-button"  src="img/$CLIENT_NAME/back.png" alt="" />
     </div>
+    <!-- Card information -->
     <div data-role="content" class="card-bits" data-theme="d">
       <span class="card-type" data-role="content">Personal Credit Card</span>
-      <div class="second-left-border"><div class="card-info left-border" id="last-4-digits-acctadd"></div></div>
+      <div class="second-left-border">
+        <div class="card-info left-border" id="last-4-digits-acctadd"></div>
+      </div>
     </div>
   </div>
-
+  <!-- New account form -->
   <div data-role="content">
     <div class="page-heading">Add New Payment Account</div>
     <ul data-role="listview" data-inset="true" >
       <li>
         <div>
           <label for="newacctname"></label>
-          <input type="text" name="newacctname" id="newacctname" placeholder="NickName" autofocus />
+          <input type="text" name="newacctname" id="newacctname" placeholder="NickName" />
         </div>
         <div>
         <label for="newacctrouting"></label>

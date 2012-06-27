@@ -269,7 +269,7 @@ AccountData.Account = (function ($) {
          * @param number  {String} - the account number
          */
         addSrcAccount: function (name, routing, number) {
-            this.src_accounts.push(new Account({
+            account_data.src_accounts.push(new Account({
                 name:    name,
                 routing: routing,
                 number:  number
