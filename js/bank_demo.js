@@ -1755,9 +1755,9 @@ jQuery.extend(BankDemo.PaymentAccountAddController, (function ($) {
                 $('#acct-add-back-button').on('click', function () {
                     self.changePage('#acct-from');
                 });
-                $('#newacctname,#newacctrouting,#newacctnumber').on('click', function () {
-                    set_grammar(null);
-                });
+                //$('#newacctname,#newacctrouting,#newacctnumber').on('click', function () {
+                //    set_grammar(null);
+                //});
                 $('#add-acct-button').on('click', self.addAccount);
                 return 1;
             }
