@@ -66,6 +66,11 @@ var BankDemo = (function ($) {
 
     return {
         /**
+         * Set this to true to log events.
+         */
+        EventTrace: false,
+
+        /**
          * The account number for the demo, which translates into the
          * proper JSON file (e.g. 1.json) in the data/acctdata dir.
          *
@@ -327,12 +332,15 @@ BankDemo.Controller.prototype = (function ($) {
          * given page ID.
          * @param page {String} - The page ID to change to, e.g. '#main'
          */
-        changePage: function (page) {
-            BankDemo.log('cancelling audio');
+        changePage: function (page, changeHash) {
+            //BankDemo.log('cancelling audio');
             //NativeBridge.cancelAudio();
             this.clearRecoErrors();
             BankDemo.log('changing page to ' + page);
-            $.mobile.changePage($(page), {transition: 'none'});
+            if (typeof changeHash !== 'boolean') {
+                changeHash = true;
+            }
+            $.mobile.changePage($(page), {changeHash: changeHash});
         },
 
         prompted: function () {
@@ -986,10 +994,10 @@ jQuery.extend(BankDemo.TransactionDetailController, (function ($) {
             throw 'display_transaction_details: transaction is null';
         }
         if (transaction.isPayment()) {
-            self.changePage('#payment-detail',     { changeHash: false });
+            self.changePage('#payment-detail', false);
             display_payment_details(transaction);
         } else {
-            self.changePage('#transaction-detail', { changeHash: false });
+            self.changePage('#transaction-detail', false);
             display_charge_details(transaction);
         }
     }
@@ -1775,12 +1783,13 @@ jQuery.extend(BankDemo.PaymentConfirmController, (function ($) {
 
     return {
         beforeShow: function () {
+            self.unsetGrammar();
+            self.initDropdown('last-4-digits-confirm', true);
         },
 
         onShow: function () {
-            self.unsetGrammar();
-            self.initDropdown('last-4-digits-confirm', true);
             create_confirmation();
+            $('#payment-confirm').trigger('updatelayout');
         },
 
         init: function () {
@@ -1965,11 +1974,23 @@ jQuery.extend(BankDemo.ChatController, (function ($) {
 BankDemo.ApplicationController = new BankDemo.Controller('Application');
 
 jQuery.extend(BankDemo.ApplicationController, (function ($) {
+    function print_event(event, data) {
+        console.log(event.target.id + ': ' + event.type + ' @ ' + event.timeStamp);
+        if (! event.target || ! event.target.id) {
+             console.log(event);
+        }
+    }
+
     return {
         load: function () {
         },
 
         init: function () {
+           if (BankDemo.EventTrace) {
+               $('div[data-role=page]').on('mobileinit pageinit pagecontainercreate pagebeforechange pagechange pagechangefailed pagebeforecreate pagecreate create pagebeforeshow pageshow pagebeforehide pagehide click hashchange', print_event);
+               $(window).on('hashchange', print_event);
+            }
+
             NativeBridge.onInitialize(function () {});
             AccountData.Account.init(BankDemo.AccountNumber);
             BankDemo.MainMenuController.init();
