@@ -10,8 +10,9 @@ PROD_PERL_PATH = /var/www/perl/$(PROD_NAME)/grammars
 SSH_KEY = $(HOME)/.ssh/fkg-p.pem
 
 build: templates/index-template.html js/bank_demo.js js/acctdata.js js/transactions.js js/extensions.js
-	mkdir -p build/css build/js build/img; \
+	mkdir -p build/css build/js build/img build/grammars; \
 	rsync -ravq common/js/bridge.js build/js; \
+	rsync -ravq bin/dynamicgram.pl build/grammars; \
 	rsync -ravq js build/; \
 	rsync -ravq css build/; \
 	rsync -ravq img build/; \
@@ -62,7 +63,6 @@ rebuild: clean all
 dev_deploy: all
 	ssh -i $(SSH_KEY) $(USER)@$(HOST) 'mkdir -p $(DEV_PATH) $(DEV_PERL_PATH)'; \
 	rsync -ravz -e "ssh -i $(SSH_KEY) -l $(USER)" build/ $(USER)@$(HOST):$(DEV_PATH); \
-	rsync -ravz -e "ssh -i $(SSH_KEY) -l $(USER)" bin/dynamicgram.pl $(USER)@$(HOST):$(DEV_PERL_PATH)
 
 dev_deploy_clean:
 	ssh -i $(SSH_KEY) $(USER)@$(HOST) 'rm -rfv  $(DEV_PATH)/*';
@@ -70,4 +70,3 @@ dev_deploy_clean:
 prod_deploy: all
 	ssh -i $(SSH_KEY) $(USER)@$(HOST) 'mkdir -p $(PROD_PATH) $(PROD_PERL_PATH)'; \
 	rsync -ravz -e "ssh -i $(SSH_KEY) -l $(USER)" build/ $(USER)@$(HOST):$(PROD_PATH); \
-	rsync -ravz -e "ssh -i $(SSH_KEY) -l $(USER)" bin/dynamicgram.pl $(USER)@$(HOST):$(PROD_PERL_PATH)

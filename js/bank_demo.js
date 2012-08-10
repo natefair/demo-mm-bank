@@ -161,8 +161,7 @@ var BankDemo = (function ($) {
  */
 BankDemo.RT = (function ($) {
     var root_url = $.mobile.path.get(window.location.href),
-        dynamic  = root_url.replace('/content/', '/perl/') +
-                   'grammars/dynamicgram.pl';
+        dynamic  = 'grammars/dynamicgram.pl';
 
     return {
         /**
